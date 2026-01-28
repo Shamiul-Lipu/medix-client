@@ -3,7 +3,7 @@ import Link from "next/link";
 import clsx from "clsx";
 
 type LogoProps = {
-  size?: number; // icon size in px
+  size?: number;
   showText?: boolean;
   className?: string;
 };
@@ -19,7 +19,7 @@ export default function MainLogo({
       className={clsx("flex items-center gap-2 font-bold", className)}
     >
       <Image
-        src="/medix.png" // or favicon.ico if you prefer
+        src="/medix.png"
         alt="Medix logo"
         width={size}
         height={size}
