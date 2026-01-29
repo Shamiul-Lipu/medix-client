@@ -29,10 +29,12 @@ export const userService = {
       }
 
       return { data: session, error: null };
-    } catch (err) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong";
       return {
         data: null,
-        error: { message: "Something went wrong" },
+        error: { message },
       };
     }
   },
