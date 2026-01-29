@@ -65,7 +65,7 @@ export function RegisterForm({
           return;
         }
         toast.success("User created successfully!", { id: toastId });
-        router.push("/");
+        router.push("/dashboard");
       } catch (err) {
         toast.error("Something went wrong, please try again.", { id: toastId });
       }

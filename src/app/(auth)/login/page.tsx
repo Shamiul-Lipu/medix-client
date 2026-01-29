@@ -1,14 +1,14 @@
-import MainLogo from "@/components/mainLogo";
-import { RegisterForm } from "@/components/module/AuthPages/register-form";
+import MainLogo from "@/components/ui/mainLogo";
+import { LoginForm } from "@/components/module/AuthPages/login-form";
 
-export default function RegisterPage() {
+export default function LoginPage() {
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
         <div className="flex items-center gap-2 self-center font-medium">
           <MainLogo />
         </div>
-        <RegisterForm />
+        <LoginForm />
       </div>
     </div>
   );

@@ -5,48 +5,45 @@ import { userService } from "./service/user.service";
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  let isAuthenticated = false;
-  let userRole: string | null = null;
-
   const { data } = await userService.getSession();
 
-  if (data) {
-    isAuthenticated = true;
-    userRole = data.user.role;
-  }
-
   // Not authenticated → redirect to login
-  if (!isAuthenticated) {
+  if (!data) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Role-based redirects
-  // prevent ADMIN from visiting customer dashboard
-  if (userRole === UserRoles.ADMIN && pathname.startsWith("/customer")) {
-    return NextResponse.redirect(new URL("/admin-dashboard", request.url));
+  const userRole = data?.user?.role;
+
+  // Admin cannot visit customer or seller dashboards
+  if (
+    userRole === UserRoles.ADMIN &&
+    (pathname.startsWith("/dashboard/customer") ||
+      pathname.startsWith("/dashboard/seller"))
+  ) {
+    return NextResponse.redirect(new URL("/dashboard/admin", request.url));
   }
 
+  // Customer cannot visit admin or seller dashboards
   if (
     userRole === UserRoles.CUSTOMER &&
-    pathname.startsWith("/admin-dashboard")
+    (pathname.startsWith("/dashboard/admin") ||
+      pathname.startsWith("/dashboard/seller"))
   ) {
-    return NextResponse.redirect(new URL("/customer-dashboard", request.url));
+    return NextResponse.redirect(new URL("/dashboard/customer", request.url));
   }
 
+  // Seller cannot visit admin or customer dashboards
   if (
     userRole === UserRoles.SELLER &&
-    pathname.startsWith("/admin-dashboard")
+    (pathname.startsWith("/dashboard/admin") ||
+      pathname.startsWith("/dashboard/customer"))
   ) {
-    return NextResponse.redirect(new URL("/seller-dashboard", request.url));
+    return NextResponse.redirect(new URL("/dashboard/seller", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/admin-dashboard/:path*",
-    "/customer-dashboard/:path*",
-    "/seller-dashboard/:path*",
-  ],
+  matcher: ["/dashboard/:path*"],
 };

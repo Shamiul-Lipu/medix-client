@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client"; // Your Better Auth client
+import { authClient } from "@/lib/auth-client";
 import * as z from "zod";
 import Link from "next/link";
 
@@ -46,7 +46,7 @@ export function LoginForm({
         const { user, session, error } = await authClient.signIn.email({
           email: value.email,
           password: value.password,
-          callbackURL: "http://localhost:3000",
+          callbackURL: "http://localhost:3000/dashboard",
         });
 
         if (error) {

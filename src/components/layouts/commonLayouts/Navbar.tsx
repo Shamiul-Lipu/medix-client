@@ -13,10 +13,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import MainLogo from "./mainLogo";
+
 import { getSession } from "@/actions/user.action";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import LogoutButton from "./LogoutButton";
+import MainLogo from "@/components/ui/mainLogo";
+import LogoutButton from "@/components/ui/LogoutButton";
 
 export async function Navbar() {
   // Server-side fetch session
@@ -71,17 +72,8 @@ export async function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">Profile</Link>
+                  <Link href="/dashboard">Dashboard</Link>
                 </DropdownMenuItem>
-
-                {userRole === "admin" && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin" className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" /> Admin Dashboard
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-
                 <DropdownMenuItem className="text-red-600">
                   <LogoutButton />
                 </DropdownMenuItem>
