@@ -29,4 +29,5 @@ export interface GetMedicinesParams {
   limit?: string | number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  category?: string;
 }
