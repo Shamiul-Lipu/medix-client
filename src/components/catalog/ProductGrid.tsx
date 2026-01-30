@@ -10,7 +10,7 @@ export default function ProductGrid({ medicines }: ProductGridProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
       {medicines.map((medicine) => (
-        <Link key={medicine.id} href={`/catalog/${medicine.id}`}>
+        <Link key={medicine.id} href={`/shop/${medicine.id}`}>
           <ProductCard medicine={medicine} viewMode="grid" />
         </Link>
       ))}

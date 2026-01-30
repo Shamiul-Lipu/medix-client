@@ -1,346 +1,196 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { LayoutGrid, List, Star, Filter } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-  Card,
-  CardContent,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import Image from "next/image";
+import { Star, ShieldCheck, Package } from "lucide-react";
 
 import { medicineService } from "@/service/medicine.service";
 import { Medicine } from "@/constants/medicine";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// -----------------------------
-// FilterSidebar
-// -----------------------------
-interface FilterSidebarProps {
-  selectedCategory: string;
-  setSelectedCategory: (cat: string) => void;
-  prescriptionFilter: "all" | "required" | "not-required";
-  setPrescriptionFilter: (val: "all" | "required" | "not-required") => void;
-  inStockOnly: boolean;
-  setInStockOnly: (val: boolean) => void;
+export async function generateStaticParams() {
+  const { data } = await medicineService.getMedicines();
+
+  return data?.data?.data?.map((medicine: Medicine) => ({
+    id: medicine.id,
+  }));
 }
 
-const CATEGORIES = [
-  "All",
-  "Pain Relief",
-  "Vitamins",
-  "Personal Care",
-  "Baby Care",
-  "Diabetes",
-  "Antibiotics",
-  "Medical Devices",
-];
+const SingleProductPage = async ({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) => {
+  const { id } = await params;
+  const { data } = await medicineService.getMedicineById(id);
+  const medicine = data?.data;
 
-const FilterSidebar: React.FC<FilterSidebarProps> = ({
-  selectedCategory,
-  setSelectedCategory,
-  prescriptionFilter,
-  setPrescriptionFilter,
-  inStockOnly,
-  setInStockOnly,
-}) => (
-  <div className="flex flex-col gap-6">
-    {/* Category */}
-    <div>
-      <h3 className="text-sm font-bold uppercase mb-3">Categories</h3>
-      <div className="flex flex-col gap-2">
-        {CATEGORIES.map((cat) => (
-          <div key={cat} className="flex items-center gap-2">
-            <Checkbox
-              id={`cat-${cat}`}
-              checked={selectedCategory === cat}
-              onCheckedChange={() => setSelectedCategory(cat)}
-            />
-            <Label htmlFor={`cat-${cat}`} className="text-sm cursor-pointer">
-              {cat}
-            </Label>
-          </div>
-        ))}
-      </div>
-    </div>
+  // console.log(medicine);
 
-    <Separator />
-
-    {/* Prescription */}
-    <div>
-      <h3 className="text-sm font-bold uppercase mb-3">Prescription</h3>
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="rx-required"
-            checked={prescriptionFilter === "required"}
-            onCheckedChange={() => setPrescriptionFilter("required")}
-          />
-          <Label htmlFor="rx-required" className="text-sm">
-            Required
-          </Label>
-        </div>
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="rx-not-required"
-            checked={prescriptionFilter === "not-required"}
-            onCheckedChange={() => setPrescriptionFilter("not-required")}
-          />
-          <Label htmlFor="rx-not-required" className="text-sm">
-            Not Required
-          </Label>
-        </div>
-      </div>
-    </div>
-
-    <Separator />
-
-    {/* Stock */}
-    <div>
-      <h3 className="text-sm font-bold uppercase mb-3">Availability</h3>
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="in-stock"
-          checked={inStockOnly}
-          onCheckedChange={() => setInStockOnly(!inStockOnly)}
-        />
-        <Label htmlFor="in-stock" className="text-sm">
-          In Stock Only
-        </Label>
-      </div>
-    </div>
-  </div>
-);
-
-// -----------------------------
-// Main CatalogPage
-// -----------------------------
-export default function CatalogPage() {
-  const [medicines, setMedicines] = useState<Medicine[]>([]);
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
-  const [prescriptionFilter, setPrescriptionFilter] = useState<
-    "all" | "required" | "not-required"
-  >("all");
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [sort, setSort] = useState<
-    "newest" | "price-low" | "price-high" | "rating"
-  >("newest");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-
-  const [page, setPage] = useState(1);
-  const limit = 12; // products per page
-  const [totalPages, setTotalPages] = useState(1);
-
-  // Fetch medicines
-  useEffect(() => {
-    const fetchMedicines = async () => {
-      try {
-        const res = await medicineService.getMedicines({
-          search: search || undefined,
-          category: category !== "All" ? category : undefined,
-          page,
-          limit,
-          sortBy: sort === "newest" ? "createdAt" : "price",
-          sortOrder: sort === "price-high" ? "desc" : "asc",
-        });
-
-        if (res.data?.success) {
-          let filtered = res.data.data.data as Medicine[];
-
-          // Apply client-side filters
-
-          if (inStockOnly) filtered = filtered.filter((m) => m.stock > 0);
-
-          setMedicines(filtered);
-          setTotalPages(res.data.data.pagination.totalPages);
-        }
-      } catch (err) {
-        console.error("Failed to fetch medicines", err);
-      }
-    };
-
-    fetchMedicines();
-  }, [search, category, prescriptionFilter, inStockOnly, sort, page]);
+  const reviews = medicine?.reviews ?? [];
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((a: number, b: { rating: number }) => a + b.rating, 0) /
+        reviews.length
+      : 0;
 
   return (
-    <div className="container px-4 py-10 md:py-16">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Medicine Catalog
-          </h1>
-          <Input
-            type="text"
-            placeholder="Search products..."
-            className="mt-2 md:mt-0 md:w-64"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+    <div className="container-wide relative px-1 py-12">
+      {/* Top */}
+      <div className="grid gap-10 lg:grid-cols-2">
+        {/* Image */}
+        <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted">
+          <Image
+            src={medicine?.imageUrl}
+            alt={medicine?.name}
+            fill
+            className="object-contain p-6"
+            priority
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <Select value={sort} onValueChange={(v) => setSort(v as any)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest Arrivals</SelectItem>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="rating">Average Rating</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Info */}
+        <div className="space-y-6">
+          <div>
+            <Badge variant="secondary">{medicine?.category?.name}</Badge>
+            <h1 className="mt-2 text-3xl font-semibold">{medicine?.name}</h1>
+            <p className="text-sm text-muted-foreground">
+              Manufactured by {medicine.manufacturer}
+            </p>
+          </div>
 
-          <div className="hidden border rounded-lg p-1 md:flex">
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="icon"
-              onClick={() => setViewMode("grid")}
-            >
-              <LayoutGrid className="h-4 w-4" />
+          {/* Rating */}
+          <div className="flex items-center gap-2">
+            <div className="flex">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className={`h-4 w-4 ${
+                    i < Math.round(averageRating)
+                      ? "fill-primary text-primary"
+                      : "text-muted-foreground"
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-sm text-muted-foreground">
+              {reviews.length ? `${reviews.length} reviews` : "No reviews yet"}
+            </span>
+          </div>
+
+          {/* Price */}
+          <p className="text-2xl font-bold">৳ {medicine.price}</p>
+
+          {/* Key facts */}
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-muted-foreground">Strength</p>
+              <p className="font-medium">{medicine.strength}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Form</p>
+              <p className="font-medium capitalize">{medicine.dosageForm}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Stock</p>
+              <p
+                className={`font-medium ${
+                  medicine.stock > 0 ? "text-green-600" : "text-destructive"
+                }`}
+              >
+                {medicine.stock > 0
+                  ? `${medicine.stock} available`
+                  : "Out of stock"}
+              </p>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="flex gap-4">
+            <Button size="lg" disabled={medicine.stock === 0}>
+              Add to Cart
             </Button>
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="icon"
-              onClick={() => setViewMode("list")}
-            >
-              <List className="h-4 w-4" />
+            <Button size="lg" variant="outline">
+              Buy Now
             </Button>
           </div>
 
-          {/* Mobile Filters */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="lg:hidden">
-                <Filter className="h-4 w-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <SheetHeader>
-                <SheetTitle>Filters</SheetTitle>
-              </SheetHeader>
-              <div className="py-6">
-                <FilterSidebar
-                  selectedCategory={category}
-                  setSelectedCategory={setCategory}
-                  prescriptionFilter={prescriptionFilter}
-                  setPrescriptionFilter={setPrescriptionFilter}
-                  inStockOnly={inStockOnly}
-                  setInStockOnly={setInStockOnly}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
+          {/* Trust */}
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <ShieldCheck className="h-4 w-4" />
+            Licensed & verified medicine
+          </div>
+
+          {/* Details */}
+          <Tabs defaultValue="description">
+            <TabsList>
+              <TabsTrigger value="description">Description</TabsTrigger>
+              <TabsTrigger value="usage">Usage</TabsTrigger>
+              <TabsTrigger value="side-effects">Side Effects</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="description" className="mt-6">
+              <p className="text-muted-foreground leading-relaxed">
+                {medicine.description}
+              </p>
+            </TabsContent>
+
+            <TabsContent value="usage" className="mt-6">
+              <p className="text-muted-foreground leading-relaxed">
+                {medicine.usageInstructions}
+              </p>
+            </TabsContent>
+
+            <TabsContent value="side-effects" className="mt-6">
+              <p className="text-muted-foreground leading-relaxed">
+                {medicine.sideEffects}
+              </p>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Sidebar */}
-        <aside className="hidden lg:block lg:col-span-1 border rounded-2xl p-6 h-fit sticky top-24">
-          <FilterSidebar
-            selectedCategory={category}
-            setSelectedCategory={setCategory}
-            prescriptionFilter={prescriptionFilter}
-            setPrescriptionFilter={setPrescriptionFilter}
-            inStockOnly={inStockOnly}
-            setInStockOnly={setInStockOnly}
-          />
-        </aside>
+      <Separator className="my-12" />
 
-        {/* Products */}
-        <div className="lg:col-span-3">
-          {medicines.length === 0 ? (
-            <p className="text-center text-muted-foreground">
-              No products found
-            </p>
-          ) : (
-            <div
-              className={
-                viewMode === "grid"
-                  ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
-                  : "flex flex-col gap-4"
-              }
-            >
-              {medicines.map((m) => (
-                <Link key={m.id} href={`/catalog/${m.id}`}>
-                  <Card
-                    className={`group overflow-hidden cursor-pointer transition-all hover:shadow-lg ${viewMode === "list" ? "flex flex-row" : "flex flex-col"}`}
-                  >
-                    <div
-                      className={`relative bg-muted overflow-hidden ${viewMode === "list" ? "w-48 shrink-0" : "aspect-square"}`}
-                    >
-                      <img
-                        src={m.imageUrl || "/placeholder.png"}
-                        alt={m.name}
-                        className="object-cover w-full h-full transition-transform group-hover:scale-105"
+      {/* Reviews */}
+      <div className="container-wide relative space-y-6">
+        <h2 className="text-2xl font-semibold">Customer Reviews</h2>
+
+        {reviews?.length === 0 ? (
+          <div className="rounded-lg border p-6 text-center text-muted-foreground">
+            No reviews yet. Be the first to review this medicine.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {reviews?.map(
+              (review: { id: string; rating: number; comment?: string }) => (
+                <div key={review.id} className="rounded-lg border p-4">
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < review?.rating
+                            ? "fill-primary text-primary"
+                            : "text-muted-foreground"
+                        }`}
                       />
-                    </div>
-                    <div className="flex-1 flex flex-col p-4">
-                      <CardTitle className="text-lg font-bold mb-1">
-                        {m.name}
-                      </CardTitle>
-                      <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        {m.manufacturer}
-                      </CardDescription>
-                      <div className="flex items-center justify-between mt-auto">
-                        <span className="text-xl font-bold">৳{m.price}</span>
-                        <Button
-                          size="sm"
-                          className="rounded-full"
-                          disabled={m.stock === 0}
-                        >
-                          Add to Cart
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
+                    ))}
+                  </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-6">
-              <Button disabled={page === 1} onClick={() => setPage(page - 1)}>
-                Prev
-              </Button>
-              <span>
-                {page} / {totalPages}
-              </span>
-              <Button
-                disabled={page === totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          )}
-        </div>
+                  {review?.comment && (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {review?.comment}
+                    </p>
+                  )}
+                </div>
+              ),
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default SingleProductPage;

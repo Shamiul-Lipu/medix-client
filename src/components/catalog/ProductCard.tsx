@@ -127,16 +127,6 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
               {isOutOfStock ? "Unavailable" : "Add to Cart"}
             </span>
           </Button>
-
-          <Link href={`/medicines/${medicine.id}`} className="flex-1">
-            <Button
-              className="w-full gap-2 rounded-full shrink-0 gap-2"
-              size="sm"
-              variant="outline"
-            >
-              Details
-            </Button>
-          </Link>
         </div>
       </CardContent>
     </Card>

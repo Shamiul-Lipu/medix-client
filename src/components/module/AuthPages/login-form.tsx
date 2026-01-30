@@ -43,7 +43,7 @@ export function LoginForm({
     onSubmit: async ({ value }) => {
       const toastId = toast.loading("Logging in...");
       try {
-        const { user, session, error } = await authClient.signIn.email({
+        const { error } = await authClient.signIn.email({
           email: value.email,
           password: value.password,
           callbackURL: "http://localhost:3000/dashboard",

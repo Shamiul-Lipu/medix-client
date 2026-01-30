@@ -49,10 +49,5 @@ export const NAV_ITEMS = {
       href: "/dashboard/seller/inventory",
       icon: Package,
     },
-    {
-      label: "Prescriptions",
-      href: "/dashboard/seller",
-      icon: FileText,
-    },
   ],
 };

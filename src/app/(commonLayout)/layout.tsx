@@ -1,3 +1,4 @@
+import { Footer } from "@/components/layouts/commonLayouts/Footer";
 import { Navbar } from "@/components/layouts/commonLayouts/Navbar";
 
 export default function CommonLayout({
@@ -6,9 +7,10 @@ export default function CommonLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div>
+    <div className="flex min-h-screen flex-col">
       <Navbar />
-      {children}
+      <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 }
