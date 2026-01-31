@@ -1,12 +1,12 @@
 import Image from "next/image";
-import { Star, ShieldCheck, Package } from "lucide-react";
+import { Star, ShieldCheck } from "lucide-react";
 
 import { medicineService } from "@/service/medicine.service";
 import { Medicine } from "@/constants/medicine";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ProductActionButtons from "@/components/ui/ProductActionButtons";
 
 export async function generateStaticParams() {
   const { data } = await medicineService.getMedicines();
@@ -106,14 +106,8 @@ const SingleProductPage = async ({
           </div>
 
           {/* CTA */}
-          <div className="flex gap-4">
-            <Button size="lg" disabled={medicine.stock === 0}>
-              Add to Cart
-            </Button>
-            <Button size="lg" variant="outline">
-              Buy Now
-            </Button>
-          </div>
+          {/* CTA */}
+          <ProductActionButtons medicine={medicine} />
 
           {/* Trust */}
           <div className="flex items-center gap-4 text-sm text-muted-foreground">

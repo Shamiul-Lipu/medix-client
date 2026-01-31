@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { User, Shield, ShoppingCart, Menu } from "lucide-react";
+import { User, ShoppingCart, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,6 +18,7 @@ import { getSession } from "@/actions/user.action";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import MainLogo from "@/components/ui/mainLogo";
 import LogoutButton from "@/components/ui/LogoutButton";
+import CartIndicator from "@/components/ui/CartIndicator";
 
 export async function Navbar() {
   // Server-side fetch session
@@ -44,15 +45,13 @@ export async function Navbar() {
             </Link>
           </nav>
           {/* Cart */}
-          <Link href="/cart">
+
+          <Link href="/cart" className="relative">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-                3
-              </span>
+              <CartIndicator />
             </Button>
           </Link>
-
           {/* Auth buttons / dropdown */}
           {!isLoggedIn ? (
             <div className="hidden md:flex gap-2">

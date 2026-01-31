@@ -23,6 +23,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard/admin", request.url));
   }
 
+  if (pathname.startsWith("/cart") || pathname.startsWith("/cart")) {
+    if (userRole !== UserRoles.CUSTOMER) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  }
+
   // Customer cannot visit admin or seller dashboards
   if (
     userRole === UserRoles.CUSTOMER &&
@@ -45,5 +51,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/cart/:path*", "/checkout/:path*"],
 };
