@@ -16,7 +16,7 @@ export function Sidebar({ role }: { role: Role }) {
 
       <nav className="flex-1 px-4 space-y-1">
         {navItems[role].map((item) => {
-          const Icon = item.icon;
+          // const Icon = item.icon;
           const active = pathname === item.href;
 
           return (

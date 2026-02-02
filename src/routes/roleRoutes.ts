@@ -4,7 +4,6 @@ import {
   Users,
   ShoppingBag,
   BarChart3,
-  FileText,
 } from "lucide-react";
 
 // Role-based navigation
@@ -40,8 +39,8 @@ export const NAV_ITEMS = {
   ],
   SELLER: [
     {
-      label: "Overview",
-      href: "/dashboard/seller",
+      label: "Orders",
+      href: "/dashboard/seller/orders",
       icon: LayoutDashboard,
     },
     {

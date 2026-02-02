@@ -26,7 +26,7 @@ export function MobileSidebar({ role }: { role: Role }) {
 
         <nav className="space-y-1">
           {navItems[role].map((item) => {
-            const Icon = item.icon;
+            // const Icon = item.icon;
             return (
               <Link
                 key={item.href}

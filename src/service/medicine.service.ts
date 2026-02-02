@@ -1,53 +1,159 @@
-import { GetMedicinesParams, ServiceOptions } from "@/constants/medicine";
+// import { GetMedicinesParams, ServiceOptions } from "@/constants/medicine";
+import { cookies } from "next/headers";
+
+export interface Medicine {
+  id: string;
+  sellerId: string;
+  categoryId: string;
+
+  name: string;
+  description?: string | null;
+  manufacturer: string;
+  price: number;
+  stock: number;
+  dosageForm?: string | null;
+  strength?: string | null;
+  usageInstructions?: string | null;
+  sideEffects?: string | null;
+  imageUrl?: string | null;
+  isActive: boolean;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CreateMedicinePayload {
+  categoryId: string;
+  name: string;
+  description?: string;
+  manufacturer: string;
+  price: number;
+  stock: number;
+  dosageForm?: string;
+  strength?: string;
+  usageInstructions?: string;
+  sideEffects?: string;
+  imageUrl?: string;
+}
+
+interface UpdateMedicinePayload {
+  categoryId?: string;
+  name?: string;
+  description?: string;
+  manufacturer?: string;
+  price?: number;
+  stock?: number;
+  dosageForm?: string;
+  strength?: string;
+  usageInstructions?: string;
+  sideEffects?: string;
+  imageUrl?: string;
+  isActive?: boolean;
+}
+
+const API_BASE = "http://localhost:5000/api/v1/medicine";
 
 export const medicineService = {
-  getMedicines: async function (
-    params?: GetMedicinesParams,
-    options?: ServiceOptions,
-  ) {
+  // GET seller medicines
+  getMedicines: async () => {
     try {
-      const url = new URL("http://localhost:5000/api/v1/medicine");
+      const cookieStore = await cookies();
 
-      if (params) {
-        Object.entries(params).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== "") {
-            url.searchParams.append(key, String(value));
-          }
-        });
-      }
+      const res = await fetch(API_BASE, {
+        headers: { Cookie: cookieStore.toString() },
+        next: { tags: ["medicines"] },
+      });
 
-      const config: RequestInit = {};
+      if (!res.ok) throw new Error("Failed to fetch medicines");
 
-      if (options?.cache) config.cache = options.cache;
-      if (options?.revalidate) config.next = { revalidate: options.revalidate };
-      config.next = { ...config.next, tags: ["medicines"] };
-
-      const res = await fetch(url.toString(), config);
       const data = await res.json();
-
-      return { data, error: null };
-    } catch (error: unknown) {
+      return { data: data.data as Medicine[], error: null };
+    } catch (err) {
       const message =
-        error instanceof Error ? error.message : "Something went wrong";
-      return {
-        data: null,
-        error: { message },
-      };
+        err instanceof Error ? err.message : "Something went wrong";
+      return { data: null, error: { message } };
     }
   },
 
-  getMedicineById: async function (id: string) {
+  // CREATE medicine
+  createMedicine: async (payload: CreateMedicinePayload) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/v1/medicine/${id}`);
+      const cookieStore = await cookies();
+
+      const res = await fetch(API_BASE, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: cookieStore.toString(),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to create medicine");
+      }
+
       const data = await res.json();
-      return { data, error: null };
-    } catch (error) {
+      return { data: data.data as Medicine, error: null };
+    } catch (err) {
       const message =
-        error instanceof Error ? error.message : "Something went wrong";
-      return {
-        data: null,
-        error: { message },
-      };
+        err instanceof Error ? err.message : "Something went wrong";
+      return { data: null, error: { message } };
+    }
+  },
+
+  // UPDATE medicine
+  updateMedicine: async (id: string, payload: UpdateMedicinePayload) => {
+    try {
+      const cookieStore = await cookies();
+
+      const res = await fetch(`${API_BASE}/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: cookieStore.toString(),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to update medicine");
+      }
+
+      const data = await res.json();
+      return { data: data.data as Medicine, error: null };
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong";
+      return { data: null, error: { message } };
+    }
+  },
+
+  // DELETE / DEACTIVATE medicine
+  deleteMedicine: async (id: string) => {
+    try {
+      const cookieStore = await cookies();
+
+      const res = await fetch(`${API_BASE}/${id}`, {
+        method: "DELETE",
+        headers: {
+          Cookie: cookieStore.toString(),
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to delete medicine");
+      }
+
+      const data = await res.json();
+      return { data: data.data as Medicine, error: null };
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong";
+      return { data: null, error: { message } };
     }
   },
 };

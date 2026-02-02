@@ -54,6 +54,7 @@ export default function DashboardLayout({
 
   // "/dashboard/customer/orders" → ["dashboard", "customer", "orders"]
   const segments = pathname.split("/").filter(Boolean);
+  // console.log(segments);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background/50 selection:bg-primary/20 selection:text-primary">
@@ -137,7 +138,9 @@ export default function DashboardLayout({
                           : "hover:text-foreground capitalize"
                       }
                     >
-                      {segment.replace("-", " ")}
+                      {segment
+                        .replace("-", " ")
+                        .replace(/\b\w/g, (char) => char.toUpperCase())}
                     </Link>
                   </div>
                 );

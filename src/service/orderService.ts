@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 
-interface OrderItem {
-  id: string;
-  medicineNameSnapshot: string;
-  quantity: number;
-  priceSnapshot: number;
-  subtotal: number;
-  status: string;
-}
+// interface OrderItem {
+//   id: string;
+//   medicineNameSnapshot: string;
+//   quantity: number;
+//   priceSnapshot: number;
+//   subtotal: number;
+//   status: string;
+// }
 
 interface CreateOrderPayload {
   shippingName: string;
@@ -42,6 +42,7 @@ export const orderService = {
         },
       });
 
+      // console.log({ res });
       if (!res.ok) throw new Error("Failed to fetch orders");
 
       const data = await res.json();
