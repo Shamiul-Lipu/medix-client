@@ -10,8 +10,10 @@ import ProductActionButtons from "@/components/ui/ProductActionButtons";
 
 export async function generateStaticParams() {
   const { data } = await medicineService.getMedicines();
-
-  return data?.data?.data?.map((medicine: Medicine) => ({
+  if (!data?.data) {
+    return [];
+  }
+  return data?.data?.map((medicine: Medicine) => ({
     id: medicine.id,
   }));
 }
@@ -23,7 +25,7 @@ const SingleProductPage = async ({
 }) => {
   const { id } = await params;
   const { data } = await medicineService.getMedicineById(id);
-  const medicine = data?.data;
+  const medicine = data;
 
   // console.log(medicine);
 

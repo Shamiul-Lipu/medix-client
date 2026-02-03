@@ -5,11 +5,23 @@ export interface Medicine {
   manufacturer: string;
   price: string;
   stock: number;
-  dosageForm: string | null;
-  strength: string | null;
-  imageUrl: string;
-  category: { id: string; name: string };
+  imageUrl?: string;
+  dosageForm?: string;
+  strength?: string;
+  usageInstructions?: string;
+  sideEffects?: string;
+  isActive: boolean;
   createdAt: string;
+
+  category: {
+    id: string;
+    name: string;
+  };
+
+  seller?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface ServiceOptions {

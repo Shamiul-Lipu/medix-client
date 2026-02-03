@@ -5,6 +5,8 @@ import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { Medicine } from "@/constants/medicine";
 import { useCart } from "@/context/cartContext";
+import { getSession } from "@/actions/user.action";
+import { UserRoles } from "@/constants/userRoles";
 
 interface ProductActionButtonsProps {
   medicine: Medicine;
@@ -21,6 +23,21 @@ export default function ProductActionButtons({
     const toastId = toast.loading(`Adding ${medicine.name}...`);
 
     try {
+      const { data } = await getSession();
+      const { user } = data;
+
+      if (!user) {
+        toast.dismiss(toastId);
+        toast.warning("You need to log in to add items to your cart");
+        return;
+      }
+
+      if (user.role !== UserRoles.CUSTOMER) {
+        toast.dismiss(toastId);
+        toast.warning("Only customers can add items to the cart");
+        return;
+      }
+
       await addToCart({
         medicineId: medicine.id,
         name: medicine.name,

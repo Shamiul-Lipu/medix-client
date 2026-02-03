@@ -1,35 +1,34 @@
 import MedicineCard from "@/components/layouts/commonLayouts/MedicineCard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Medicine } from "@/constants/medicine";
 import { medicineService } from "@/service/medicine.service";
-import { ArrowRight, Heart, ShoppingCart } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 const Products = async () => {
   const [featuredRes, bestSellerRes, newArrivalRes] = await Promise.all([
     medicineService.getMedicines({
-      limit: "4",
+      limit: 4,
       sortBy: "createdAt",
       sortOrder: "desc",
     }),
     medicineService.getMedicines({
-      limit: "4",
+      limit: 4,
       sortBy: "stock",
       sortOrder: "desc",
     }),
     medicineService.getMedicines({
-      limit: "4",
+      limit: 4,
       sortBy: "createdAt",
       sortOrder: "asc",
     }),
   ]);
   // console.log(featuredRes, bestSellerRes, newArrivalRes);
   const tabData: Record<string, Medicine[]> = {
-    featured: featuredRes.data?.data?.data || [],
-    bestsellers: bestSellerRes.data?.data?.data || [],
-    newArrivals: newArrivalRes.data?.data?.data || [],
+    featured: featuredRes.data?.data || [],
+    bestsellers: bestSellerRes.data?.data || [],
+    newArrivals: newArrivalRes.data?.data || [],
   };
 
   return (

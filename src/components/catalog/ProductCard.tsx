@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { getSession } from "@/actions/user.action";
+import { UserRoles } from "@/constants/userRoles";
 
 interface ProductCardProps {
   medicine: Medicine;
@@ -32,16 +34,33 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
     setLoading(true);
     const toastId = toast.loading("Adding to cart...");
     try {
+      const { data } = await getSession();
+      const { user } = data;
+
+      if (!user) {
+        toast.dismiss(toastId);
+        toast.warning("You need to log in to add items to your cart");
+        return;
+      }
+
+      if (user.role !== UserRoles.CUSTOMER) {
+        toast.dismiss(toastId);
+        toast.warning("Only customers can add items to the cart");
+        return;
+      }
+
       await addToCart({
         medicineId: medicine.id,
         quantity: 1,
         name: medicine.name,
         manufacturer: medicine.manufacturer,
         price: price,
-        imageUrl: medicine.imageUrl,
+        imageUrl: medicine.imageUrl!,
         maxQuantity: medicine.stock,
       });
-      toast.success("Added to cart!", { id: toastId });
+      toast.success(`${medicine.name} was added to your cart.`, {
+        id: toastId,
+      });
     } catch (err) {
       console.error(err);
       toast.error("Failed to add to cart", { id: toastId });
@@ -67,7 +86,7 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
         }`}
       >
         <Image
-          src={medicine.imageUrl}
+          src={medicine.imageUrl!}
           alt={medicine.name}
           className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
           width={1000}

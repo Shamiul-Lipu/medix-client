@@ -1,14 +1,15 @@
 "use client";
 
-import React from "react";
+import { z } from "zod";
+import { useEffect, useState } from "react";
+import { useForm } from "@tanstack/react-form";
 
-import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -22,12 +23,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 
-interface Medicine {
-  id: string;
+import { getCategories } from "@/actions/category.action";
+import { Medicine } from "@/service/medicine.service";
+
+export interface MedicineFormValues {
   name: string;
   manufacturer: string;
-  category: string;
+  categoryId: string;
   price: number;
   stock: number;
   dosageForm: string;
@@ -35,42 +39,90 @@ interface Medicine {
   isActive: boolean;
 }
 
-interface MedicineDialogProps {
+export interface MedicineDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (medicine: Medicine) => void;
+  onSubmit: (values: MedicineFormValues) => Promise<void>;
   medicine?: Medicine | null;
-  categories: string[];
 }
+
+const medicineSchema = z.object({
+  name: z.string().min(1, "Medicine name is required"),
+  manufacturer: z.string().min(1, "Manufacturer is required"),
+  categoryId: z.string().min(1, "Category is required"),
+  price: z.number().min(0, "Price must be 0 or greater"),
+  stock: z.number().int().min(0, "Stock must be 0 or greater"),
+  dosageForm: z.string(),
+  strength: z.string(),
+  isActive: z.boolean(),
+});
 
 export default function MedicineDialog({
   open,
   onOpenChange,
   onSubmit,
   medicine,
-  categories,
 }: MedicineDialogProps) {
-  const [formData, setFormData] = useState<Medicine>({
-    id: "",
-    name: "",
-    manufacturer: "",
-    category: "",
-    price: 0,
-    stock: 0,
-    dosageForm: "",
-    strength: "",
-    isActive: true,
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      manufacturer: "",
+      categoryId: "",
+      price: 0,
+      stock: 0,
+      dosageForm: "",
+      strength: "",
+      isActive: true,
+    },
+    validators: {
+      onSubmit: medicineSchema,
+    },
+    onSubmit: async ({ value }) => {
+      await onSubmit(value);
+    },
   });
 
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
+    [],
+  );
+  const [loadingCategories, setLoadingCategories] = useState(false);
+
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const res = await getCategories(1, 1000);
+        if (res.error) throw new Error(res.error.message);
+        setCategories(res.data);
+      } catch (err: any) {
+        toast.error(err.message || "Failed to load categories");
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
     if (medicine) {
-      setFormData(medicine);
+      form.reset({
+        name: medicine.name,
+        manufacturer: medicine.manufacturer,
+        categoryId: medicine.category.id,
+        price: Number(medicine.price),
+        stock: medicine.stock,
+        dosageForm: medicine.dosageForm ?? "",
+        strength: medicine.strength ?? "",
+        isActive: medicine.isActive,
+      });
     } else {
-      setFormData({
-        id: "",
+      form.reset({
         name: "",
         manufacturer: "",
-        category: "",
+        categoryId: "",
         price: 0,
         stock: 0,
         dosageForm: "",
@@ -78,199 +130,179 @@ export default function MedicineDialog({
         isActive: true,
       });
     }
-  }, [medicine, open]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value, type } = e.target as HTMLInputElement;
-    setFormData({
-      ...formData,
-      [name]:
-        type === "number" ? (value === "" ? 0 : parseFloat(value)) : value,
-    });
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleCheckChange = (checked: boolean) => {
-    setFormData({ ...formData, isActive: checked });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name || !formData.manufacturer || !formData.category) {
-      alert("Please fill in all required fields");
-      return;
-    }
-    onSubmit(formData);
-  };
+  }, [open, medicine, form]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-2xl">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {medicine ? "Edit Medicine" : "Add New Medicine"}
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription>
             {medicine
               ? "Update the medicine details below."
-              : "Fill in the details to add a new medicine to your inventory."}
+              : "Fill in the details to add a new medicine."}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <form
+          id="medicine-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+          className="space-y-6"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-slate-300">
-                Medicine Name *
-              </Label>
-              <Input
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="e.g., Aspirin"
-                className="bg-slate-700/50 border-slate-600 text-white"
-                required
-              />
-            </div>
+            <form.Field name="name">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <Label>Medicine name</Label>
+                  <Input
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                  {field.state.meta.isTouched && !field.state.meta.isValid && (
+                    <p className="text-xs text-destructive">
+                      {field.state.meta.errors[0]?.message}
+                    </p>
+                  )}
+                </div>
+              )}
+            </form.Field>
 
             {/* Manufacturer */}
-            <div className="space-y-2">
-              <Label htmlFor="manufacturer" className="text-slate-300">
-                Manufacturer *
-              </Label>
-              <Input
-                id="manufacturer"
-                name="manufacturer"
-                value={formData.manufacturer}
-                onChange={handleChange}
-                placeholder="e.g., Bayer"
-                className="bg-slate-700/50 border-slate-600 text-white"
-                required
-              />
-            </div>
+            <form.Field name="manufacturer">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <Label>Manufacturer</Label>
+                  <Input
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                  {field.state.meta.isTouched && !field.state.meta.isValid && (
+                    <p className="text-xs text-destructive">
+                      {field.state.meta.errors[0]?.message}
+                    </p>
+                  )}
+                </div>
+              )}
+            </form.Field>
 
             {/* Category */}
-            <div className="space-y-2">
-              <Label htmlFor="category" className="text-slate-300">
-                Category *
-              </Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => handleSelectChange("category", value)}
-              >
-                <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-700 border-slate-600">
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <form.Field name="categoryId">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <Label>Category</Label>
+                  <Select
+                    value={field.state.value}
+                    onValueChange={field.handleChange}
+                    disabled={loadingCategories}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {field.state.meta.isTouched && !field.state.meta.isValid && (
+                    <p className="text-xs text-destructive">
+                      {field.state.meta.errors[0]?.message}
+                    </p>
+                  )}
+                </div>
+              )}
+            </form.Field>
 
             {/* Price */}
-            <div className="space-y-2">
-              <Label htmlFor="price" className="text-slate-300">
-                Price ($)
-              </Label>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={handleChange}
-                placeholder="0.00"
-                className="bg-slate-700/50 border-slate-600 text-white"
-              />
-            </div>
+            <form.Field name="price">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <Label>Price</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(Number(e.target.value))}
+                  />
+                </div>
+              )}
+            </form.Field>
 
             {/* Stock */}
-            <div className="space-y-2">
-              <Label htmlFor="stock" className="text-slate-300">
-                Stock Quantity
-              </Label>
-              <Input
-                id="stock"
-                name="stock"
-                type="number"
-                value={formData.stock}
-                onChange={handleChange}
-                placeholder="0"
-                className="bg-slate-700/50 border-slate-600 text-white"
-              />
-            </div>
+            <form.Field name="stock">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <Label>Stock</Label>
+                  <Input
+                    type="number"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(Number(e.target.value))}
+                  />
+                </div>
+              )}
+            </form.Field>
 
             {/* Dosage Form */}
-            <div className="space-y-2">
-              <Label htmlFor="dosageForm" className="text-slate-300">
-                Dosage Form
-              </Label>
-              <Input
-                id="dosageForm"
-                name="dosageForm"
-                value={formData.dosageForm}
-                onChange={handleChange}
-                placeholder="e.g., Tablet"
-                className="bg-slate-700/50 border-slate-600 text-white"
-              />
-            </div>
+            <form.Field name="dosageForm">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <Label>Dosage form</Label>
+                  <Input
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                </div>
+              )}
+            </form.Field>
 
             {/* Strength */}
-            <div className="space-y-2">
-              <Label htmlFor="strength" className="text-slate-300">
-                Strength
-              </Label>
-              <Input
-                id="strength"
-                name="strength"
-                value={formData.strength}
-                onChange={handleChange}
-                placeholder="e.g., 500mg"
-                className="bg-slate-700/50 border-slate-600 text-white"
-              />
-            </div>
+            <form.Field name="strength">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <Label>Strength</Label>
+                  <Input
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                  />
+                </div>
+              )}
+            </form.Field>
           </div>
 
-          {/* Active Status */}
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="isActive"
-              checked={formData.isActive}
-              onCheckedChange={(checked) =>
-                handleCheckChange(checked as boolean)
-              }
-              className="border-slate-600"
-            />
-            <Label htmlFor="isActive" className="text-slate-300 cursor-pointer">
-              Active
-            </Label>
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600"
-            >
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-              {medicine ? "Update" : "Add"} Medicine
-            </Button>
-          </DialogFooter>
+          {/* Active */}
+          <form.Field name="isActive">
+            {(field) => (
+              <div className="flex items-center gap-3 rounded-lg border p-3">
+                <Checkbox
+                  checked={field.state.value}
+                  onCheckedChange={(v) => field.handleChange(Boolean(v))}
+                />
+                <Label className="cursor-pointer">Active</Label>
+              </div>
+            )}
+          </form.Field>
         </form>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form="medicine-form">
+            {medicine ? "Update" : "Add"} medicine
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

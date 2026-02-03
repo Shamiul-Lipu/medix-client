@@ -1,73 +1,148 @@
-// import { GetMedicinesParams, ServiceOptions } from "@/constants/medicine";
 import { cookies } from "next/headers";
 
 export interface Medicine {
   id: string;
-  sellerId: string;
-  categoryId: string;
-
   name: string;
+  description: string;
+  manufacturer: string;
+  price: string;
+  stock: number;
+  imageUrl?: string;
+  dosageForm?: string;
+  strength?: string;
+  usageInstructions?: string;
+  sideEffects?: string;
+  isActive: boolean;
+  createdAt: string;
+
+  category: {
+    id: string;
+    name: string;
+  };
+
+  seller?: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface CreateMedicinePayload {
+  id: string;
+  sellerId?: string;
+  categoryId?: string;
+
+  name?: string;
   description?: string | null;
   manufacturer: string;
-  price: number;
-  stock: number;
+  price?: number;
+  stock?: number;
   dosageForm?: string | null;
   strength?: string | null;
   usageInstructions?: string | null;
   sideEffects?: string | null;
   imageUrl?: string | null;
-  isActive: boolean;
-
-  createdAt: string;
-  updatedAt: string;
+  isActive?: boolean;
 }
 
-interface CreateMedicinePayload {
-  categoryId: string;
-  name: string;
-  description?: string;
-  manufacturer: string;
-  price: number;
-  stock: number;
-  dosageForm?: string;
-  strength?: string;
-  usageInstructions?: string;
-  sideEffects?: string;
-  imageUrl?: string;
-}
-
-interface UpdateMedicinePayload {
+export interface UpdateMedicinePayload {
+  id: string;
+  sellerId?: string;
   categoryId?: string;
   name?: string;
-  description?: string;
-  manufacturer?: string;
+  description?: string | null;
+  manufacturer: string;
   price?: number;
   stock?: number;
-  dosageForm?: string;
-  strength?: string;
-  usageInstructions?: string;
-  sideEffects?: string;
-  imageUrl?: string;
+  dosageForm?: string | null;
+  strength?: string | null;
+  usageInstructions?: string | null;
+  sideEffects?: string | null;
+  imageUrl?: string | null;
   isActive?: boolean;
+}
+
+export interface GetMedicinesParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  categoryId?: string;
+  manufacturer?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minStock?: number;
+  maxStock?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  sortByStock?: boolean;
+  sortOrderStock?: "asc" | "desc";
 }
 
 const API_BASE = "http://localhost:5000/api/v1/medicine";
 
 export const medicineService = {
-  // GET seller medicines
-  getMedicines: async () => {
+  getMedicines: async (params?: Partial<GetMedicinesParams>) => {
     try {
       const cookieStore = await cookies();
 
-      const res = await fetch(API_BASE, {
-        headers: { Cookie: cookieStore.toString() },
+      const query = params
+        ? `?${new URLSearchParams(
+            Object.entries(params)
+              .filter(([, v]) => v !== undefined && v !== null)
+              .map(([k, v]) => [k, String(v as string | number | boolean)]),
+          ).toString()}`
+        : "";
+
+      const res = await fetch(`${API_BASE}${query}`, {
+        headers: {
+          Cookie: cookieStore.toString(),
+        },
         next: { tags: ["medicines"] },
       });
 
       if (!res.ok) throw new Error("Failed to fetch medicines");
 
+      const json = await res.json();
+
+      return {
+        data: json.data as {
+          pagination: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+          };
+          data: Medicine[];
+        },
+        error: null,
+      };
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong";
+
+      return {
+        data: null,
+        error: { message },
+      };
+    }
+  },
+
+  getMedicineById: async (id: string) => {
+    try {
+      const cookieStore = await cookies();
+      const res = await fetch(`${API_BASE}/${id}`, {
+        method: "GET",
+        headers: {
+          Cookie: cookieStore.toString(),
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to get medicine");
+      }
+
       const data = await res.json();
-      return { data: data.data as Medicine[], error: null };
+      return { data: data.data, error: null };
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
@@ -75,11 +150,9 @@ export const medicineService = {
     }
   },
 
-  // CREATE medicine
-  createMedicine: async (payload: CreateMedicinePayload) => {
+  createMedicine: async (payload: Partial<Medicine>) => {
     try {
       const cookieStore = await cookies();
-
       const res = await fetch(API_BASE, {
         method: "POST",
         headers: {
@@ -103,11 +176,9 @@ export const medicineService = {
     }
   },
 
-  // UPDATE medicine
-  updateMedicine: async (id: string, payload: UpdateMedicinePayload) => {
+  updateMedicine: async (id: string, payload: Partial<Medicine>) => {
     try {
       const cookieStore = await cookies();
-
       const res = await fetch(`${API_BASE}/${id}`, {
         method: "PUT",
         headers: {
@@ -131,11 +202,9 @@ export const medicineService = {
     }
   },
 
-  // DELETE / DEACTIVATE medicine
   deleteMedicine: async (id: string) => {
     try {
       const cookieStore = await cookies();
-
       const res = await fetch(`${API_BASE}/${id}`, {
         method: "DELETE",
         headers: {

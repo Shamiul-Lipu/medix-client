@@ -68,7 +68,7 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
       {/* Image */}
       <div className="relative aspect-square overflow-hidden rounded-t-2xl bg-muted/10">
         <Image
-          src={medicine.imageUrl}
+          src={medicine.imageUrl!}
           alt={medicine.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           width={1000}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,171 +14,94 @@ import { Plus, Search, Edit2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-import MedicineDialog from "./MedicineDialog";
+import {
+  createMedicine,
+  deleteMedicine,
+  getMedicines,
+  updateMedicine,
+} from "@/actions/medicine.action";
+import { Medicine } from "@/service/medicine.service";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getCategories } from "@/actions/category.action";
+import MedicineDialog, { MedicineFormValues } from "./MedicineDialog";
 
-interface Medicine {
-  id: string;
-  name: string;
-  manufacturer: string;
-  category: string;
-  price: number;
-  stock: number;
-  dosageForm: string;
-  strength: string;
-  isActive: boolean;
-}
-
-/* ------------------------------------------------------------------ */
-/* Mock Data */
-/* ------------------------------------------------------------------ */
-
-const MOCK_MEDICINES: Medicine[] = [
-  {
-    id: "1",
-    name: "Aspirin",
-    manufacturer: "Bayer",
-    category: "Pain Relief",
-    price: 5.99,
-    stock: 150,
-    dosageForm: "Tablet",
-    strength: "500mg",
-    isActive: true,
-  },
-  {
-    id: "2",
-    name: "Ibuprofen",
-    manufacturer: "Advil",
-    category: "Pain Relief",
-    price: 7.99,
-    stock: 45,
-    dosageForm: "Tablet",
-    strength: "400mg",
-    isActive: true,
-  },
-  {
-    id: "3",
-    name: "Amoxicillin",
-    manufacturer: "GSK",
-    category: "Antibiotics",
-    price: 12.99,
-    stock: 0,
-    dosageForm: "Capsule",
-    strength: "500mg",
-    isActive: true,
-  },
-  {
-    id: "4",
-    name: "Vitamin C",
-    manufacturer: "Nature's Way",
-    category: "Vitamins",
-    price: 9.99,
-    stock: 200,
-    dosageForm: "Tablet",
-    strength: "1000mg",
-    isActive: true,
-  },
-  {
-    id: "5",
-    name: "Metformin",
-    manufacturer: "Merck",
-    category: "Diabetes",
-    price: 15.99,
-    stock: 75,
-    dosageForm: "Tablet",
-    strength: "850mg",
-    isActive: false,
-  },
-];
-
-/* ------------------------------------------------------------------ */
-/* Component */
-/* ------------------------------------------------------------------ */
+type SortOption = "newest" | "stock-high" | "stock-low" | "price-high";
 
 export default function MedicinesTab() {
-  const [medicines, setMedicines] = useState<Medicine[]>(MOCK_MEDICINES);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [stockFilter, setStockFilter] = useState("all");
+
+  const [sort, setSort] = useState<SortOption>("newest");
+
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [allCategories, setAllCategories] = useState<
+    { id: string; name: string }[]
+  >([]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState<Medicine | null>(null);
 
   const itemsPerPage = 5;
 
-  /* ------------------------------------------------------------------ */
-  /* Derived Data */
-  /* ------------------------------------------------------------------ */
+  const fetchMedicines = async () => {
+    try {
+      setLoading(true);
 
-  const categories = Array.from(new Set(medicines.map((m) => m.category)));
+      let sortBy: "createdAt" | "price" | "stock";
+      let sortOrder: "asc" | "desc";
 
-  const filteredMedicines = useMemo(() => {
-    return medicines.filter((medicine) => {
-      const matchesSearch =
-        medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        medicine.manufacturer.toLowerCase().includes(searchTerm.toLowerCase());
+      switch (sort) {
+        case "stock-high":
+          sortBy = "stock";
+          sortOrder = "desc";
+          break;
 
-      const matchesCategory =
-        categoryFilter === "all" || medicine.category === categoryFilter;
+        case "stock-low":
+          sortBy = "stock";
+          sortOrder = "asc";
+          break;
 
-      const matchesStock =
-        stockFilter === "all" ||
-        (stockFilter === "low" && medicine.stock > 0 && medicine.stock <= 50) ||
-        (stockFilter === "out" && medicine.stock === 0) ||
-        (stockFilter === "high" && medicine.stock > 50);
+        case "price-high":
+          sortBy = "price";
+          sortOrder = "desc";
+          break;
 
-      return matchesSearch && matchesCategory && matchesStock;
-    });
-  }, [medicines, searchTerm, categoryFilter, stockFilter]);
+        default:
+          sortBy = "createdAt";
+          sortOrder = "desc";
+      }
 
-  const totalPages = Math.ceil(filteredMedicines.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedMedicines = filteredMedicines.slice(
-    startIndex,
-    startIndex + itemsPerPage,
-  );
+      const res = await getMedicines({
+        page: currentPage,
+        limit: itemsPerPage,
+        search: searchTerm || undefined,
+        categoryId: categoryFilter === "all" ? undefined : categoryFilter,
 
-  /* ------------------------------------------------------------------ */
-  /* Handlers */
-  /* ------------------------------------------------------------------ */
+        // sorting (IMPORTANT: only these)
+        sortBy,
+        sortOrder,
+      });
 
-  const handleAddMedicine = (newMedicine: Medicine) => {
-    if (editingMedicine) {
-      setMedicines(
-        medicines.map((m) =>
-          m.id === editingMedicine.id ? { ...newMedicine, id: m.id } : m,
-        ),
-      );
-      toast.success("Medicine updated");
-      setEditingMedicine(null);
-    } else {
-      setMedicines([
-        ...medicines,
-        { ...newMedicine, id: Date.now().toString() },
-      ]);
-      toast.success("Medicine added");
+      if (res.error) throw new Error(res.error.message);
+
+      setMedicines(res.data.data);
+      setTotalPages(res.data.pagination.totalPages);
+    } catch (err) {
+      toast.error("Failed to fetch medicines");
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-
-    setDialogOpen(false);
   };
 
-  const handleEditMedicine = (medicine: Medicine) => {
-    setEditingMedicine(medicine);
-    setDialogOpen(true);
-  };
-
-  const handleDeleteMedicine = (id: string) => {
-    toast.warning("Delete medicine?", {
-      description: "This action cannot be undone.",
-      action: {
-        label: "Delete",
-        onClick: () => {
-          setMedicines(medicines.filter((m) => m.id !== id));
-          toast.success("Medicine deleted");
-        },
-      },
-    });
-  };
+  useEffect(() => {
+    fetchMedicines();
+  }, [searchTerm, categoryFilter, sort, currentPage]);
 
   const getStockVariant = (stock: number) => {
     if (stock === 0) return "destructive";
@@ -192,9 +115,76 @@ export default function MedicinesTab() {
     return "In stock";
   };
 
-  /* ------------------------------------------------------------------ */
-  /* UI */
-  /* ------------------------------------------------------------------ */
+  const handleAddMedicine = async (values: MedicineFormValues) => {
+    try {
+      setLoading(true);
+
+      const payload = {
+        id: editingMedicine?.id,
+        categoryId: values.categoryId,
+        name: values.name,
+        manufacturer: values.manufacturer,
+        price: String(values.price),
+        stock: values.stock,
+        dosageForm: values.dosageForm || undefined,
+        strength: values.strength || undefined,
+        isActive: values.isActive,
+      };
+
+      // CREATE or UPDATE depending on editingMedicine
+      const res = editingMedicine
+        ? await updateMedicine(editingMedicine.id, payload)
+        : await createMedicine(payload);
+
+      if (res.error) {
+        toast.error(res.error.message);
+        return;
+      }
+
+      toast.success(editingMedicine ? "Medicine updated" : "Medicine added");
+      setDialogOpen(false);
+      setEditingMedicine(null);
+      await fetchMedicines();
+    } catch (err: any) {
+      const message = err instanceof Error ? err.message : "Action failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteMedicine = async (id: string) => {
+    toast.warning("Delete medicine?", {
+      description: "This action cannot be undone.",
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            const res = await deleteMedicine(id);
+            if (res.error) throw new Error(res.error.message);
+            toast.success("Medicine deleted");
+            fetchMedicines();
+          } catch (err: any) {
+            toast.error(err.message || "Failed to delete");
+          }
+        },
+      },
+    });
+  };
+
+  useEffect(() => {
+    const fetchAllCategories = async () => {
+      try {
+        const res = await getCategories(1, 1000);
+        if (res.error) throw new Error(res.error.message);
+        setAllCategories(res.data);
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+      }
+    };
+
+    fetchAllCategories();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -226,103 +216,124 @@ export default function MedicinesTab() {
         </div>
 
         <div className="flex flex-col gap-4 sm:flex-row">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          {/* Category filter */}
+          <Select
+            value={categoryFilter}
+            onValueChange={(v) => {
+              setCategoryFilter(v);
+              setCurrentPage(1);
+            }}
+          >
             <SelectTrigger className="sm:w-48">
               <SelectValue placeholder="All categories" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All categories</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
+              {allCategories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select value={stockFilter} onValueChange={setStockFilter}>
-            <SelectTrigger className="sm:w-48">
-              <SelectValue placeholder="All stock levels" />
+          {/* Sorting */}
+          <Select
+            value={sort}
+            onValueChange={(v) => {
+              setSort(v as SortOption);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger className="sm:w-56">
+              <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All stock levels</SelectItem>
-              <SelectItem value="high">High stock</SelectItem>
-              <SelectItem value="low">Low stock</SelectItem>
-              <SelectItem value="out">Out of stock</SelectItem>
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="stock-high">Stock: High → Low</SelectItem>
+              <SelectItem value="stock-low">Stock: Low → High</SelectItem>
+              <SelectItem value="price-high">Price: High → Low</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      {/* Empty state */}
-      {filteredMedicines.length === 0 && (
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="font-medium">No medicines found</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Try adjusting your search or filters.
-          </p>
-        </div>
-      )}
-
       {/* Table */}
-      {filteredMedicines.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-6 py-3 text-left text-sm font-medium">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-medium">
-                  Manufacturer
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-medium">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-medium">
-                  Price
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-medium">
-                  Stock
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-medium">
-                  Strength
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-medium">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedMedicines.map((medicine) => (
-                <tr
-                  key={medicine.id}
-                  className="border-b transition hover:bg-muted/50"
-                >
-                  <td className="px-6 py-4 font-medium">{medicine.name}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {medicine.manufacturer}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {medicine.category}
-                  </td>
-                  <td className="px-6 py-4 font-medium">
-                    ${medicine.price.toFixed(2)}
+      <div className="overflow-x-auto rounded-lg border">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-6 py-3 text-left text-sm font-medium">Name</th>
+              <th className="px-6 py-3 text-left text-sm font-medium">
+                Manufacturer
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-medium">Price</th>
+              <th className="px-6 py-3 text-left text-sm font-medium">Stock</th>
+              <th className="px-6 py-3 text-left text-sm font-medium">
+                Strength
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-medium">
+                Actions
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {loading ? (
+              // Skeleton rows while loading
+              [...Array(itemsPerPage)].map((_, i) => (
+                <tr key={i} className="border-b">
+                  <td className="px-6 py-4">
+                    <Skeleton className="h-6 w-32 rounded-md" />
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant={getStockVariant(medicine.stock)}>
-                      {medicine.stock} · {getStockLabel(medicine.stock)}
+                    <Skeleton className="h-6 w-24 rounded-md" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <Skeleton className="h-6 w-16 rounded-md" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <Skeleton className="h-6 w-20 rounded-md" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <Skeleton className="h-6 w-16 rounded-md" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <Skeleton className="h-6 w-20 rounded-md" />
+                  </td>
+                </tr>
+              ))
+            ) : medicines.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-6 text-center">
+                  No medicines found
+                </td>
+              </tr>
+            ) : (
+              medicines.map((m) => (
+                <tr key={m.id} className="border-b hover:bg-muted/50">
+                  <td className="px-6 py-4 font-medium">{m.name}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                    {m.manufacturer}
+                  </td>
+                  <td className="px-6 py-4 font-medium">${m.price}</td>
+                  <td className="px-6 py-4">
+                    <Badge variant={getStockVariant(m.stock)}>
+                      {m.stock} · {getStockLabel(m.stock)}
                     </Badge>
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {medicine.strength}
+                    {m.strength}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => handleEditMedicine(medicine)}
+                        onClick={() => {
+                          setEditingMedicine(m);
+                          setDialogOpen(true);
+                        }}
                       >
                         <Edit2 className="h-4 w-4" />
                       </Button>
@@ -330,54 +341,39 @@ export default function MedicinesTab() {
                         size="icon"
                         variant="ghost"
                         className="text-destructive"
-                        onClick={() => handleDeleteMedicine(medicine.id)}
+                        onClick={() => handleDeleteMedicine(m.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {startIndex + 1}–
-            {Math.min(startIndex + itemsPerPage, filteredMedicines.length)} of{" "}
-            {filteredMedicines.length}
+            Page {currentPage} of {totalPages}
           </p>
-
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              onClick={() => setCurrentPage((p) => p - 1)}
             >
               Previous
             </Button>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <Button
-                key={page}
-                size="sm"
-                variant={page === currentPage ? "default" : "outline"}
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
-              </Button>
-            ))}
-
             <Button
               variant="outline"
               size="sm"
               disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => setCurrentPage((p) => p + 1)}
             >
               Next
             </Button>
@@ -391,7 +387,6 @@ export default function MedicinesTab() {
         onOpenChange={setDialogOpen}
         onSubmit={handleAddMedicine}
         medicine={editingMedicine}
-        categories={categories}
       />
     </div>
   );

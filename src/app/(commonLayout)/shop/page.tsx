@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { medicineService } from "@/service/medicine.service";
 import { Medicine } from "@/constants/medicine";
 import CatalogHeader from "@/components/catalog/CatalogHeader";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +9,8 @@ import ProductGrid from "@/components/catalog/ProductGrid";
 import ProductList from "@/components/catalog/ProductList";
 import Pagination from "@/components/catalog/Pagination";
 import MobileFilters from "@/components/catalog/MobileFilters";
+import { getMedicines } from "@/actions/medicine.action";
+import { getCategories } from "@/actions/category.action";
 
 export type SortOption = "newest" | "price-low" | "price-high" | "rating";
 
@@ -18,54 +19,48 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [sort, setSort] = useState<SortOption>("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
 
   const limit = 12;
 
-  /* ---------------- Debounce search ---------------- */
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
-      setPage(1); // Reset page when search changes
+      setPage(1);
     }, 300);
 
     return () => clearTimeout(timer);
   }, [search]);
 
-  /* ---------------- Fetch medicines ---------------- */
   useEffect(() => {
     const fetchMedicines = async () => {
       setLoading(true);
       try {
-        const res = await medicineService.getMedicines({
-          search: debouncedSearch || undefined, // send search query
+        const res = await getMedicines({
+          search: debouncedSearch || undefined,
           page,
           limit,
           sortBy: sort === "newest" ? "createdAt" : "price",
-          sortOrder: sort === "price-high" ? "desc" : "asc",
+          sortOrder:
+            sort === "newest" ? "desc" : sort === "price-high" ? "desc" : "asc",
         });
 
-        if (res.data?.success) {
-          const allMedicines = res.data.data.data as Medicine[];
+        if (res.data) {
+          const allMedicines = res.data.data as unknown as Medicine[];
 
-          // Build all categories from all medicines
           const catMap: Record<string, string> = {};
           allMedicines.forEach((m) => {
             if (m.category?.id && m.category?.name) {
               catMap[m.category.id] = m.category.name;
             }
           });
-          setCategories(
-            Object.entries(catMap).map(([id, name]) => ({ id, name })),
-          );
 
-          // Client-side filters
           let filtered = allMedicines;
 
           if (selectedCategories.length > 0) {
@@ -79,7 +74,7 @@ export default function CatalogPage() {
           }
 
           setMedicines(filtered);
-          setTotalPages(res.data.data.pagination.totalPages);
+          setTotalPages(res.data.pagination.totalPages);
         }
       } catch (err) {
         console.error("Failed to fetch medicines", err);
@@ -91,10 +86,23 @@ export default function CatalogPage() {
     fetchMedicines();
   }, [debouncedSearch, selectedCategories, inStockOnly, sort, page]);
 
-  /* ---------------- Reset page on filters ---------------- */
   useEffect(() => {
     setPage(1);
   }, [selectedCategories, inStockOnly, sort]);
+
+  useEffect(() => {
+    const fetchAllCategories = async () => {
+      try {
+        const res = await getCategories(1, 1000);
+        if (res.error) throw new Error(res.error.message);
+        setAllCategories(res.data);
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+      }
+    };
+
+    fetchAllCategories();
+  }, []);
 
   return (
     <div className="min-h-screen bg-linear-to-bfrom-background to-muted/20">
@@ -115,7 +123,7 @@ export default function CatalogPage() {
           <aside className="hidden lg:block lg:col-span-1">
             <div className="sticky top-24">
               <FilterSidebar
-                categories={categories}
+                categories={allCategories}
                 selectedCategories={selectedCategories}
                 setSelectedCategories={setSelectedCategories}
                 inStockOnly={inStockOnly}
@@ -159,7 +167,7 @@ export default function CatalogPage() {
 
         {/* Mobile Filters */}
         <MobileFilters
-          categories={categories}
+          categories={allCategories}
           selectedCategories={selectedCategories}
           setSelectedCategories={setSelectedCategories}
           inStockOnly={inStockOnly}
@@ -170,7 +178,6 @@ export default function CatalogPage() {
   );
 }
 
-/* ---------------- Skeleton ---------------- */
 function ProductGridSkeleton({ viewMode }: { viewMode: "grid" | "list" }) {
   return (
     <div
@@ -205,7 +212,6 @@ function ProductGridSkeleton({ viewMode }: { viewMode: "grid" | "list" }) {
   );
 }
 
-/* ---------------- Empty State ---------------- */
 function EmptyState({
   search,
   onClearFilters,

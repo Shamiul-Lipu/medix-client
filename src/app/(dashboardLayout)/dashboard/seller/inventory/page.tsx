@@ -6,7 +6,7 @@ import MedicinesTab from "@/components/layouts/dashboard/seller/MedicineTab";
 import CategoriesTab from "@/components/layouts/dashboard/seller/CategoryTab";
 
 export default function InventoryPage() {
-  const [activeTab, setActiveTab] = useState("categories");
+  const [activeTab, setActiveTab] = useState("medicines");
 
   return (
     <main className="min-h-screen bg-background">
