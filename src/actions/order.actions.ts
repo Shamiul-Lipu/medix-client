@@ -28,8 +28,8 @@ export const createOrder = async (orderData: {
   return res;
 };
 
-export const updateOrderItemStatus = async (itemId: string, status: string) => {
-  const res = await orderService.updateOrderItemStatus(itemId, status);
+export const updateOrderStatus = async (orderId: string, status: string) => {
+  const res = await orderService.updateOrderStatus(orderId, status);
   updateTag("orders");
   return res;
 };

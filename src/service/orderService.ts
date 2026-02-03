@@ -98,7 +98,7 @@ export const orderService = {
   },
 
   // Update the status of an order item
-  updateOrderItemStatus: async (itemId: string, status: string) => {
+  updateOrderStatus: async (itemId: string, status: string) => {
     try {
       const cookieStore = await cookies();
       const res = await fetch(`${API_BASE}/items/${itemId}/status`, {

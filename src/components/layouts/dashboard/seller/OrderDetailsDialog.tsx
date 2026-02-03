@@ -9,13 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -23,23 +16,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  MapPin,
-  Phone,
-  DollarSign,
-  Calendar,
-  Package,
-  Loader2,
-} from "lucide-react";
+import { MapPin, Phone, DollarSign, Calendar, Package } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 interface OrderItem {
   id: string;
   medicineNameSnapshot: string;
+  manufacturerSnapshot?: string;
   quantity: number;
   priceSnapshot: number;
   subtotal: number;
-  status: string;
 }
 
 interface Order {
@@ -64,17 +50,7 @@ interface OrderDetailsDialogProps {
   order: Order;
   isOpen: boolean;
   onClose: () => void;
-  onStatusUpdate: (itemId: string, newStatus: string) => void;
-  updatingItems: Set<string>;
 }
-
-const ITEM_STATUS_OPTIONS = [
-  "PLACED",
-  "PROCESSING",
-  "SHIPPED",
-  "DELIVERED",
-  "CANCELLED",
-];
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -107,18 +83,10 @@ export function OrderDetailsDialog({
   order,
   isOpen,
   onClose,
-  onStatusUpdate,
-  updatingItems,
 }: OrderDetailsDialogProps) {
-  // Calculate overall order status from items
-  const allStatuses = order.items.map((item) => item.status);
-  const uniqueStatuses = [...new Set(allStatuses)];
-  const orderStatus =
-    uniqueStatuses.length === 1 ? uniqueStatuses[0] : order.status;
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="container-wide max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
@@ -127,7 +95,9 @@ export function OrderDetailsDialog({
                 Order details and shipping information
               </DialogDescription>
             </div>
-            <Badge className={getStatusColor(orderStatus)}>{orderStatus}</Badge>
+            <Badge className={getStatusColor(order.status)}>
+              {order.status}
+            </Badge>
           </div>
         </DialogHeader>
 
@@ -156,7 +126,7 @@ export function OrderDetailsDialog({
                 )}
               </div>
               <div className="flex items-start gap-3">
-                <Phone className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                <Phone className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm text-muted-foreground">Contact</p>
                   <p className="font-medium text-foreground">
@@ -165,7 +135,7 @@ export function OrderDetailsDialog({
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm text-muted-foreground">
                     Shipping Address
@@ -188,76 +158,41 @@ export function OrderDetailsDialog({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Medicine</TableHead>
+                    <TableHead>Manufacturer</TableHead>
                     <TableHead className="text-center">Quantity</TableHead>
                     <TableHead className="text-right">Price</TableHead>
                     <TableHead className="text-right">Subtotal</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {order.items.map((item) => {
-                    const isUpdating = updatingItems.has(item.id);
-
-                    return (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">
-                          {item.medicineNameSnapshot}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {item.quantity}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          ৳{item.priceSnapshot.toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          ৳{item.subtotal.toFixed(2)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(item.status)}>
-                            {item.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Select
-                            value={item.status}
-                            onValueChange={(newStatus) =>
-                              onStatusUpdate(item.id, newStatus)
-                            }
-                            disabled={
-                              isUpdating ||
-                              item.status === "DELIVERED" ||
-                              item.status === "CANCELLED"
-                            }
-                          >
-                            <SelectTrigger className="w-35">
-                              <SelectValue>
-                                {isUpdating ? (
-                                  <span className="flex items-center gap-2">
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                    Updating...
-                                  </span>
-                                ) : (
-                                  "Change Status"
-                                )}
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ITEM_STATUS_OPTIONS.map((status) => (
-                                <SelectItem
-                                  key={status}
-                                  value={status}
-                                  disabled={status === item.status}
-                                >
-                                  {status}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {order.items.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">
+                        {item.medicineNameSnapshot}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.manufacturerSnapshot || "N/A"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item.quantity}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        ৳{item.priceSnapshot.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        ৳{item.subtotal.toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {/* Total Row */}
+                  <TableRow className="bg-muted/50 font-semibold">
+                    <TableCell colSpan={4} className="text-right">
+                      Total Amount:
+                    </TableCell>
+                    <TableCell className="text-right text-lg">
+                      ৳{order.totalAmount.toFixed(2)}
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             </div>
@@ -332,13 +267,12 @@ export function OrderDetailsDialog({
             </div>
           )}
 
-          {/* Action Info */}
+          {/* Info Note */}
           <div className="rounded-lg bg-blue-50 dark:bg-blue-950 p-4 text-sm text-blue-900 dark:text-blue-100">
-            <p className="font-medium mb-1">ℹ️ Status Management</p>
+            <p className="font-medium mb-1">ℹ️ Order Status</p>
             <p className="text-xs">
-              Update individual item statuses above. The order status will
-              automatically update when all items reach the same status. Items
-              cannot be updated after being marked as DELIVERED or CANCELLED.
+              Update the order status using the dropdown in the orders table.
+              Status changes apply to the entire order and all its items.
             </p>
           </div>
         </div>

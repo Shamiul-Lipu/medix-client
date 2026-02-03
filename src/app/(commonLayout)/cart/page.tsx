@@ -85,7 +85,7 @@ export default function CartPage() {
             <p className="mb-8 text-muted-foreground">
               Start adding medicines to your cart to see them here
             </p>
-            <Link href="/catalog">
+            <Link href="/shop">
               <Button size="lg" className="gap-2">
                 Browse Products
                 <ArrowRight className="h-4 w-4" />

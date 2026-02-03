@@ -1,6 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -10,18 +16,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useState } from "react";
+import { ChevronDown, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { OrderDetailsDialog } from "./OrderDetailsDialog";
-import { updateOrderItemStatus } from "@/actions/order.actions";
+import { cancelOrder, updateOrderStatus } from "@/actions/order.actions";
 import { toast } from "sonner";
+import { getSession } from "@/actions/user.action";
+import { UserRoles } from "@/constants/userRoles";
 
 interface OrderItem {
   id: string;
   medicineNameSnapshot: string;
+  manufacturerSnapshot?: string;
   quantity: number;
   priceSnapshot: number;
   subtotal: number;
-  status: string;
 }
 
 interface Order {
@@ -47,14 +56,14 @@ interface OrdersTableProps {
   onRefresh: () => void;
 }
 
-// OrderItem statuses (backend supports these)
-// const ITEM_STATUS_OPTIONS = [
-//   "PLACED",
-//   "PROCESSING",
-//   "SHIPPED",
-//   "DELIVERED",
-//   "CANCELLED",
-// ];
+// Allowed transitions for SELLER/ADMIN
+const ORDER_TRANSITIONS: Record<string, string[]> = {
+  PLACED: ["PROCESSING"],
+  PROCESSING: ["SHIPPED"],
+  SHIPPED: ["DELIVERED"],
+  DELIVERED: [],
+  CANCELLED: [],
+};
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -83,32 +92,55 @@ const formatDate = (date: Date) => {
 
 export function OrdersTable({ orders, onRefresh }: OrdersTableProps) {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+  const [updatingOrders, setUpdatingOrders] = useState<Set<string>>(new Set());
+  const [userRole, setUserRole] = useState<string | null>(null);
 
-  const handleItemStatusUpdate = async (itemId: string, newStatus: string) => {
+  // Fetch session once
+  useEffect(() => {
+    getSession().then((session) => {
+      const user = session?.data?.user;
+      setUserRole(user?.role ?? null);
+    });
+  }, []);
+
+  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
+    setUpdatingOrders((prev) => new Set(prev).add(orderId));
+
     try {
-      // Add to updating set
-      setUpdatingItems((prev) => new Set(prev).add(itemId));
+      const session = await getSession();
+      const user = session?.data?.user;
 
-      const response = await updateOrderItemStatus(itemId, newStatus);
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
 
-      if (response.data?.success) {
-        toast.success(`Order item status changed to ${newStatus}`);
+      let res;
 
-        // Refresh orders to get updated data
+      if (user.role === UserRoles.CUSTOMER) {
+        res = await cancelOrder(orderId, "canceled");
+      } else {
+        res = await updateOrderStatus(orderId, newStatus);
+      }
+
+      if (res?.data?.success) {
+        toast.success(
+          user.role === UserRoles.CUSTOMER
+            ? "Order canceled successfully"
+            : `Order status changed to ${newStatus}`,
+        );
+
         onRefresh();
       } else {
-        throw new Error(response.data?.message || "Failed to update status");
+        toast.error(res?.data?.message ?? "Failed to update status");
       }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to update order status");
+    } catch (error: any) {
+      console.error("Failed to update order status:", error);
+      toast.error(error?.message ?? "Failed to update order status");
     } finally {
-      // Remove from updating set
-      setUpdatingItems((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(itemId);
-        return newSet;
+      setUpdatingOrders((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
       });
     }
   };
@@ -141,22 +173,13 @@ export function OrdersTable({ orders, onRefresh }: OrdersTableProps) {
           </TableHeader>
           <TableBody>
             {orders.map((order) => {
-              // Get the most common item status for order-level display
-              const itemStatuses = order.items.map((item) => item.status);
-              const statusCounts = itemStatuses.reduce(
-                (acc, status) => {
-                  acc[status] = (acc[status] || 0) + 1;
-                  return acc;
-                },
-                {} as Record<string, number>,
-              );
-              const primaryStatus =
-                Object.entries(statusCounts).sort(
-                  (a, b) => b[1] - a[1],
-                )[0]?.[0] || order.status;
+              const isUpdating = updatingOrders.has(order.id);
 
               return (
-                <TableRow key={order.id} className="hover:bg-muted/50">
+                <TableRow
+                  key={order.id}
+                  className="hover:bg-muted/50 overflow-visible"
+                >
                   <TableCell className="font-medium text-foreground">
                     {order.id}
                   </TableCell>
@@ -198,16 +221,59 @@ export function OrdersTable({ orders, onRefresh }: OrdersTableProps) {
                       ? "Cash on Delivery"
                       : "Card"}
                   </TableCell>
-                  <TableCell>
-                    <Badge className={`${getStatusColor(primaryStatus)}`}>
-                      {primaryStatus}
-                    </Badge>
-                    {order.items.length > 1 && (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        (mixed)
-                      </span>
-                    )}
+                  <TableCell className="overflow-visible">
+                    <div className="flex items-center gap-2 overflow-visible">
+                      <Badge className={getStatusColor(order.status)}>
+                        {order.status}
+                      </Badge>
+
+                      {/* Status Update / Cancel Logic */}
+                      {(() => {
+                        if (!userRole) return null;
+
+                        // CUSTOMER sees Cancel button if allowed
+                        if (
+                          userRole === UserRoles.CUSTOMER &&
+                          (order.status === "PLACED" ||
+                            order.status === "PROCESSING")
+                        ) {
+                          return (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              disabled={isUpdating}
+                              onClick={() =>
+                                handleStatusUpdate(order.id, "CANCELLED")
+                              }
+                            >
+                              {isUpdating ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                "Cancel"
+                              )}
+                            </Button>
+                          );
+                        }
+
+                        // SELLER / ADMIN see dropdown
+                        const allowedNextStatuses =
+                          ORDER_TRANSITIONS[order.status] ?? [];
+
+                        if (allowedNextStatuses.length === 0) return null;
+
+                        return (
+                          <StatusUpdateSelect
+                            currentStatus={order.status}
+                            onStatusChange={(newStatus) =>
+                              handleStatusUpdate(order.id, newStatus)
+                            }
+                            isUpdating={isUpdating}
+                          />
+                        );
+                      })()}
+                    </div>
                   </TableCell>
+
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDate(order.createdAt)}
                   </TableCell>
@@ -232,10 +298,45 @@ export function OrdersTable({ orders, onRefresh }: OrdersTableProps) {
           order={selectedOrder}
           isOpen={!!selectedOrder}
           onClose={() => setSelectedOrder(null)}
-          onStatusUpdate={handleItemStatusUpdate}
-          updatingItems={updatingItems}
         />
       )}
     </>
+  );
+}
+
+function StatusUpdateSelect({
+  currentStatus,
+  onStatusChange,
+  isUpdating,
+}: {
+  currentStatus: string;
+  onStatusChange: (status: string) => void;
+  isUpdating: boolean;
+}) {
+  const allowedNextStatuses = ORDER_TRANSITIONS[currentStatus] ?? [];
+
+  if (allowedNextStatuses.length === 0) return null;
+
+  return (
+    <Select onValueChange={onStatusChange} disabled={isUpdating}>
+      <SelectTrigger
+        className="h-7 w-auto gap-1 border-0 bg-transparent p-0 hover:bg-muted"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {isUpdating ? (
+          <Loader2 className="h-4 w-4 animate-spin opacity-50" />
+        ) : (
+          <ChevronDown className="h-4 w-4 opacity-50" />
+        )}
+      </SelectTrigger>
+
+      <SelectContent position="popper" sideOffset={4} className="z-50">
+        {allowedNextStatuses.map((status) => (
+          <SelectItem key={status} value={status}>
+            {status}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

@@ -23,6 +23,7 @@ import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 import { getSession } from "@/actions/user.action";
 import { createOrder } from "@/actions/order.actions";
+import { useCart } from "@/context/cartContext";
 
 interface OrderSheetProps {
   cartItems: {
@@ -33,6 +34,7 @@ interface OrderSheetProps {
 
 export default function OrderSheet({ cartItems }: OrderSheetProps) {
   const [open, setOpen] = useState(false);
+  const { clearCart } = useCart();
 
   const form = useForm({
     defaultValues: {
@@ -71,6 +73,7 @@ export default function OrderSheet({ cartItems }: OrderSheetProps) {
         toast.success("Order placed successfully", { id: toastId });
 
         setOpen(false);
+        clearCart();
         form.reset();
       } catch (err: any) {
         toast.error(err?.message || "Failed to place order", {
@@ -83,7 +86,7 @@ export default function OrderSheet({ cartItems }: OrderSheetProps) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button className="w-full h-12 text-lg font-semibold">
+        <Button className=" w-full h-12 text-lg font-semibold">
           Checkout
           <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
@@ -100,7 +103,7 @@ export default function OrderSheet({ cartItems }: OrderSheetProps) {
         </SheetDescription>
       </SheetHeader>
 
-      <SheetContent className="sm:max-w-md">
+      <SheetContent className="sm:max-w-md container-wide">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
