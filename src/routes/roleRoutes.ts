@@ -11,7 +11,7 @@ export const NAV_ITEMS = {
   ADMIN: [
     {
       label: "Overview",
-      href: "/dashboard/admin",
+      href: "/dashboard",
       icon: LayoutDashboard,
     },
     {
@@ -28,7 +28,7 @@ export const NAV_ITEMS = {
   CUSTOMER: [
     {
       label: "Overview",
-      href: "/dashboard/customer",
+      href: "/dashboard",
       icon: LayoutDashboard,
     },
     {
@@ -38,6 +38,11 @@ export const NAV_ITEMS = {
     },
   ],
   SELLER: [
+    {
+      label: "Overview",
+      href: "/dashboard",
+      icon: LayoutDashboard,
+    },
     {
       label: "Orders",
       href: "/dashboard/seller/orders",
