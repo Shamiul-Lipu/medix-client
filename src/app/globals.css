@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+html,
+body {
+  overflow-x: hidden;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -165,4 +170,11 @@
 
 .card-hover {
   @apply transition-all duration-200 hover:border-primary/20 hover:shadow-md;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }

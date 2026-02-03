@@ -39,7 +39,7 @@ const BLOG_POSTS = [
 const ExpertAdvices = () => {
   return (
     <>
-      <section className="py-16 md:py-24  overflow-hidden ">
+      <section className="container-wide py-16 md:py-24  overflow-hidden ">
         <div className="container-wide relative">
           {/* Header */}
           <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
