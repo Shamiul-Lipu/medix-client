@@ -7,7 +7,7 @@ import { useEffect } from "react";
 export default function AdminDashboard() {
   const router = useRouter();
   useEffect(() => {
-    router.push("/dashboard/seller/inventory");
+    router.push("/dashboard");
   }, [router]);
   return (
     <div>

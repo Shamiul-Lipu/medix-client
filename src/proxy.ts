@@ -7,12 +7,21 @@ export async function proxy(request: NextRequest) {
 
   const { data } = await userService.getSession();
 
-  // Not authenticated → redirect to login
+  // Not authenticated redirect to login
   if (!data) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const userRole = data?.user?.role;
+  const user = data.user;
+  const userRole = user.role;
+  const isBanned = data?.user?.isBanned;
+
+  // If user is banned redirect to the banned page with custom message
+  if (isBanned) {
+    const response = NextResponse.redirect(new URL("/banned", request.url));
+    response.cookies.delete("better-auth.session_token");
+    return response;
+  }
 
   // Admin cannot visit customer or seller dashboards
   if (
@@ -23,7 +32,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard/admin", request.url));
   }
 
-  if (pathname.startsWith("/cart") || pathname.startsWith("/cart")) {
+  if (pathname.startsWith("/cart") || pathname.startsWith("/checkout")) {
     if (userRole !== UserRoles.CUSTOMER) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }

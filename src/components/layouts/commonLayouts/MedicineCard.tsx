@@ -26,8 +26,8 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
     setLoading(true);
 
     try {
-      const { data } = await getSession();
-      const { user } = data;
+      const res = await getSession();
+      const user = res?.data?.user;
 
       if (!user) {
         toast.dismiss(toastId);
@@ -38,9 +38,9 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
       if (user.role !== UserRoles.CUSTOMER) {
         toast.dismiss(toastId);
         toast.warning("Only customers can add items to the cart");
+        setLoading(false);
         return;
       }
-
       // Add item to cart
       addToCart({
         medicineId: medicine.id,

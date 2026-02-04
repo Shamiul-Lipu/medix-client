@@ -3,7 +3,7 @@ import {
   Package,
   Users,
   ShoppingBag,
-  BarChart3,
+  // BarChart3,
   MessageSquare,
 } from "lucide-react";
 
@@ -16,14 +16,19 @@ export const NAV_ITEMS = {
       icon: LayoutDashboard,
     },
     {
-      label: "Users",
-      href: "/dashboard/admin/users",
+      label: "Users Activity",
+      href: "/dashboard/admin/users-activity",
       icon: Users,
     },
     {
-      label: "Reports",
-      href: "/dashboard/admin/reports",
-      icon: BarChart3,
+      label: "Reviews",
+      href: "/dashboard/admin/reviews",
+      icon: MessageSquare,
+    },
+    {
+      label: "Inventory",
+      href: "/dashboard/admin/inventory",
+      icon: Package,
     },
   ],
   CUSTOMER: [

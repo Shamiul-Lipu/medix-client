@@ -36,7 +36,7 @@ type Props = {
   orders: Order[];
   loading: boolean;
   onDeleteReview?: (reviewId: string) => Promise<void>;
-  onOpenReviewModal?: (item: OrderItem) => void; // <- add this
+  onOpenReviewModal?: (item: OrderItem) => void;
 };
 
 export function ReviewDashboard({

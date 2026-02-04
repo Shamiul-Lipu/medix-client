@@ -23,8 +23,8 @@ export default function ProductActionButtons({
     const toastId = toast.loading(`Adding ${medicine.name}...`);
 
     try {
-      const { data } = await getSession();
-      const { user } = data;
+      const res = await getSession();
+      const user = res?.data?.user;
 
       if (!user) {
         toast.dismiss(toastId);
@@ -57,8 +57,23 @@ export default function ProductActionButtons({
 
   const handleBuyNow = async () => {
     if (medicine.stock === 0) return;
+    const toastId = toast.loading(`Adding ${medicine.name}...`);
 
     try {
+      const res = await getSession();
+      const user = res?.data?.user;
+
+      if (!user) {
+        toast.dismiss(toastId);
+        toast.warning("You need to log in to add items to your cart");
+        return;
+      }
+
+      if (user.role !== UserRoles.CUSTOMER) {
+        toast.dismiss(toastId);
+        toast.warning("Only customers can add items to the cart");
+        return;
+      }
       await addToCart({
         medicineId: medicine.id,
         name: medicine.name,
@@ -68,6 +83,7 @@ export default function ProductActionButtons({
         quantity: 1,
         maxQuantity: medicine.stock,
       });
+      toast.success(`${medicine.name} added to cart!`, { id: toastId });
     } catch (err: Error | unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to proceed to add";

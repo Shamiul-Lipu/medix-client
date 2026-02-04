@@ -34,8 +34,8 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
     setLoading(true);
     const toastId = toast.loading("Adding to cart...");
     try {
-      const { data } = await getSession();
-      const { user } = data;
+      const res = await getSession();
+      const user = res?.data?.user;
 
       if (!user) {
         toast.dismiss(toastId);
@@ -46,6 +46,7 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
       if (user.role !== UserRoles.CUSTOMER) {
         toast.dismiss(toastId);
         toast.warning("Only customers can add items to the cart");
+        setLoading(false);
         return;
       }
 
