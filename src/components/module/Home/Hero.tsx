@@ -4,7 +4,7 @@ import React from "react";
 
 const Hero = () => {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-pharmacy-teal-light via-background to-pharmacy-coral-light">
+    <section className="relative overflow-hidden bg-linear-to-br from-pharmacy-teal-light via-background to-pharmacy-coral-light">
       {/* Background blobs */}
       <div className="absolute -top-32 -right-32 h-[420px] w-[420px] rounded-full bg-primary/10 blur-3xl" />
       <div className="absolute -bottom-32 -left-32 h-[420px] w-[420px] rounded-full bg-secondary/10 blur-3xl" />

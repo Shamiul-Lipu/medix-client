@@ -6,7 +6,7 @@ export function NewsletterSection() {
   return (
     <section className="container-wide py-16 md:py-24">
       <div className="container mx-auto px-4">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary to-primary/80 p-8 md:p-12 lg:p-16">
+        <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-primary to-primary/80 p-8 md:p-12 lg:p-16">
           {/* Decorative blobs */}
           <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
           <div className="absolute -bottom-12 -left-12 h-64 w-64 rounded-full bg-white/5" />

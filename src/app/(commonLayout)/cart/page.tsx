@@ -28,39 +28,79 @@ type CartItem = {
   insufficientStock: boolean;
 };
 
+interface RawCartItem {
+  id?: string;
+  medicineId: string;
+  customerId?: string;
+  quantity: number;
+  // Fields that might be at the top level
+  name?: string;
+  manufacturer?: string;
+  price?: string | number;
+  stock?: number;
+  imageUrl?: string;
+  isAvailable?: boolean;
+  insufficientStock?: boolean;
+  // The nested medicine object from Prisma/API
+  medicine?: {
+    id?: string;
+    name?: string;
+    manufacturer?: string;
+    price?: string | number;
+    stock?: number;
+    imageUrl?: string;
+    category?: { id: string; name: string };
+  } | null; // IMPORTANT: medicine can be null
+}
+
 export default function CartPage() {
   const {
     items,
     itemCount,
     totalAmount,
-    isLoading,
     updateCart,
     removeFromCart,
     clearCart,
   } = useCart();
 
-  const typedItems: CartItem[] = items.map((i: any) => ({
-    id: i.id || i.medicineId,
-    customerId: i.customerId || "unknown",
-    medicineId: i.medicineId,
-    quantity: i.quantity,
-    medicine: {
-      id: i.medicine?.id || i.medicineId,
-      name: i.medicine?.name || i.name,
-      manufacturer: i.medicine?.manufacturer || i.manufacturer,
-      price: i.medicine?.price || i.price,
-      stock: i.medicine?.stock || i.stock || 0,
-      imageUrl: i.medicine?.imageUrl || i.imageUrl || "/placeholder.png",
-      category: i.medicine?.category || { id: "unknown", name: "Unknown" },
-    },
-    isAvailable: i.isAvailable ?? true,
-    insufficientStock: i.insufficientStock ?? false,
-  }));
+  // Filter out items with null medicine and map to typed items
+  const typedItems: CartItem[] = (items as RawCartItem[])
+    .filter((i) => {
+      // Filter out items where medicine is null/undefined
+      if (!i) return false;
+      if (!i.medicine && !i.name) return false; // No medicine data at all
+      return true;
+    })
+    .map(
+      (i): CartItem => ({
+        id: i?.id || i?.medicineId,
+        customerId: i?.customerId || "unknown",
+        medicineId: i?.medicineId,
+        quantity: i?.quantity || 0,
+        medicine: {
+          id: i?.medicine?.id || i?.medicineId,
+          name: i?.medicine?.name || i?.name || "Unknown Medicine",
+          manufacturer:
+            i?.medicine?.manufacturer ||
+            i?.manufacturer ||
+            "Unknown Manufacturer",
+          // Force to string to match your Medicine type definition
+          price: String(i?.medicine?.price ?? i?.price ?? "0"),
+          stock: Number(i?.medicine?.stock ?? i?.stock ?? 0),
+          imageUrl: i?.medicine?.imageUrl || i?.imageUrl || "/placeholder.png",
+          category: i?.medicine?.category || { id: "unknown", name: "Unknown" },
+        },
+        isAvailable: i?.isAvailable ?? true,
+        insufficientStock: i?.insufficientStock ?? false,
+      }),
+    );
 
-  const getItemSubtotal = (item: CartItem) =>
-    Number(item.medicine.price) * item.quantity;
+  const getItemSubtotal = (item: CartItem) => {
+    if (!item?.medicine?.price) return 0;
+    return Number(item?.medicine?.price) * (item?.quantity || 0);
+  };
 
-  if (!typedItems || typedItems.length === 0) {
+  if (!typedItems || typedItems?.length === 0) {
     return (
       <div className="relative min-h-screen overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
@@ -98,12 +138,12 @@ export default function CartPage() {
   }
 
   const orderItems = typedItems.map((item) => ({
-    medicineId: item.medicineId,
-    quantity: item.quantity,
+    medicineId: item?.medicineId,
+    quantity: item?.quantity || 0,
   }));
 
   return (
-    <div className="relative min-h-screen overflow-hidden ">
+    <div className="relative min-h-screen overflow-hidden">
       {/* Background Gradient */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
       <div className="pointer-events-none absolute left-1/2 top-32 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
@@ -117,14 +157,14 @@ export default function CartPage() {
         }}
       />
 
-      <div className="container relative px-4 py-8 md:py-12 container-wide">
+      <div className="container relative px-4 py-8 md:py-12">
         {/* Header */}
         <div className="mb-10 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Shopping Cart</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {typedItems.length}{" "}
-              {typedItems.length === 1 ? "product" : "products"}, {itemCount}{" "}
+              {typedItems?.length}{" "}
+              {typedItems?.length === 1 ? "product" : "products"}, {itemCount}{" "}
               {itemCount === 1 ? "unit" : "units"} in your cart
             </p>
           </div>
@@ -138,84 +178,110 @@ export default function CartPage() {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
           {/* Cart Items */}
           <div className="flex flex-col gap-6 lg:col-span-2">
-            {typedItems.map((item) => (
-              <div
-                key={item.id}
-                className="flex flex-col gap-6 overflow-hidden rounded-2xl border border-border/40 bg-background/70 py-6 shadow-sm backdrop-blur transition-shadow hover:shadow-md"
-              >
-                <div className="flex flex-col gap-6 p-4 sm:flex-row md:p-6">
-                  {/* Image */}
-                  <div className="mx-auto h-24 w-24 shrink-0 overflow-hidden rounded-2xl border bg-white shadow-sm sm:mx-0">
-                    <Image
-                      src={item.medicine.imageUrl}
-                      alt={item.medicine.name}
-                      className="h-full w-full object-cover"
-                      width={1000}
-                      height={1000}
-                      layout="responsive"
-                    />
-                  </div>
+            {typedItems.map((item) => {
+              // Additional safety check
+              if (!item?.medicine) {
+                return null;
+              }
 
-                  {/* Content */}
-                  <div className="flex flex-1 flex-col gap-1 text-center sm:text-left">
-                    <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
-                      <div>
-                        <h3 className="text-lg font-bold">
-                          {item.medicine.name}
-                        </h3>
-                        <p className="text-xs font-medium uppercase tracking-wider text-primary">
-                          {item.medicine.manufacturer}
-                        </p>
-                      </div>
-                      <span className="text-lg font-bold">
-                        ৳{getItemSubtotal(item).toFixed(2)}
-                      </span>
+              const medicine = item.medicine;
+              const stock = medicine.stock || 0;
+              const price = Number(medicine.price) || 0;
+
+              return (
+                <div
+                  key={item?.id}
+                  className="flex flex-col gap-6 overflow-hidden rounded-2xl border border-border/40 bg-background/70 py-6 shadow-sm backdrop-blur transition-shadow hover:shadow-md"
+                >
+                  <div className="flex flex-col gap-6 p-4 sm:flex-row md:p-6">
+                    {/* Image */}
+                    <div className="mx-auto h-24 w-24 shrink-0 overflow-hidden rounded-2xl border bg-white shadow-sm sm:mx-0">
+                      <Image
+                        src={medicine.imageUrl}
+                        alt={medicine.name}
+                        className="h-full w-full object-cover"
+                        width={96}
+                        height={96}
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.png";
+                        }}
+                      />
                     </div>
 
-                    {item.quantity > 1 && (
-                      <p className="text-xs text-muted-foreground">
-                        ৳{Number(item.medicine.price).toFixed(2)} each
-                      </p>
-                    )}
-
-                    {/* Quantity Controls */}
-                    <div className="mt-auto flex items-center justify-center gap-4 pt-4 sm:justify-start">
-                      <div className="flex items-center gap-0 overflow-hidden rounded-full border bg-background p-1 shadow-sm">
-                        <button
-                          onClick={() =>
-                            updateCart(item.medicineId, item.quantity - 1)
-                          }
-                          disabled={item.quantity <= 1}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="w-8 text-center text-sm font-bold">
-                          {item.quantity}
+                    {/* Content */}
+                    <div className="flex flex-1 flex-col gap-1 text-center sm:text-left">
+                      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                        <div>
+                          <h3 className="text-lg font-bold leading-tight">
+                            {medicine.name}
+                          </h3>
+                          <p className="text-xs font-medium uppercase tracking-wider text-primary">
+                            {medicine.manufacturer}
+                          </p>
+                        </div>
+                        <span className="text-lg font-bold">
+                          ৳{getItemSubtotal(item).toFixed(2)}
                         </span>
-                        <button
-                          onClick={() =>
-                            updateCart(item.medicineId, item.quantity + 1)
-                          }
-                          disabled={item.quantity >= item.medicine.stock}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
                       </div>
 
-                      <button
-                        onClick={() => removeFromCart(item.medicineId)}
-                        className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="hidden sm:inline">Remove</span>
-                      </button>
+                      {item.quantity > 1 && (
+                        <p className="text-xs text-muted-foreground">
+                          ৳{price.toFixed(2)} each
+                        </p>
+                      )}
+
+                      {/* Stock warning */}
+                      {stock < 10 && stock > 0 && (
+                        <p className="text-xs text-orange-600">
+                          Only {stock} left in stock
+                        </p>
+                      )}
+
+                      {stock === 0 && (
+                        <p className="text-xs text-red-600 font-medium">
+                          Out of stock
+                        </p>
+                      )}
+
+                      {/* Quantity Controls */}
+                      <div className="mt-auto flex items-center justify-center gap-4 pt-4 sm:justify-start">
+                        <div className="flex items-center gap-0 overflow-hidden rounded-full border bg-background p-1 shadow-sm">
+                          <button
+                            onClick={() =>
+                              updateCart(item.medicineId, item.quantity - 1)
+                            }
+                            disabled={item.quantity <= 1}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="w-8 text-center text-sm font-bold">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() =>
+                              updateCart(item.medicineId, item.quantity + 1)
+                            }
+                            disabled={item.quantity >= stock || stock === 0}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => removeFromCart(item.medicineId)}
+                          className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="hidden sm:inline">Remove</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Continue Shopping */}
             <Link href="/catalog">
@@ -226,20 +292,22 @@ export default function CartPage() {
           </div>
 
           {/* Order Summary */}
-          <div className="lg:col-span-1 sticky">
+          <div className="lg:col-span-1">
             <div className="sticky top-24 flex flex-col gap-6 rounded-3xl border border-border/40 bg-background/80 py-6 shadow-lg backdrop-blur">
               <div className="flex flex-col gap-4 px-6">
                 <h2 className="text-xl font-bold">Order Summary</h2>
                 <Separator />
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Total Amount</span>
-                  <span className="font-medium">৳{totalAmount.toFixed(2)}</span>
+                  <span className="font-medium">
+                    ৳{totalAmount?.toFixed(2)}
+                  </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
                   <span className="text-xl text-primary">
-                    ৳{totalAmount.toFixed(2)}
+                    ৳{totalAmount?.toFixed(2)}
                   </span>
                 </div>
               </div>

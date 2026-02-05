@@ -60,7 +60,7 @@ export function SellerDashboardComponent({
   return (
     <div className="space-y-8">
       {/* ===== Profile Header ===== */}
-      <Card className="bg-gradient-to-r from-blue-50-50 to-blue-100 shadow-md">
+      <Card className="bg-linear-to-r from-blue-50-50 to-blue-100 shadow-md">
         <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 pt-6">
           <div className="flex items-center gap-4">
             <Avatar className="h-14 w-14 ring-2 ring-purple-500">
@@ -100,28 +100,28 @@ export function SellerDashboardComponent({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Medicines"
-          value={dashboard.totalMedicines}
+          value={dashboard?.totalMedicines}
           icon={Package}
           description="Products in catalog"
           gradient="from-indigo-100 to-indigo-50 text-indigo-900"
         />
         <StatCard
           title="Low Stock"
-          value={dashboard.lowStockMedicines}
+          value={dashboard?.lowStockMedicines}
           icon={AlertCircle}
           description="Need restocking"
           gradient="from-red-100 to-red-50 text-red-900"
         />
         <StatCard
           title="Pending Orders"
-          value={dashboard.pendingOrders}
+          value={dashboard?.pendingOrders}
           icon={Clock}
           description="Awaiting fulfillment"
           gradient="from-yellow-100 to-yellow-50 text-yellow-900"
         />
         <StatCard
           title="Total Revenue"
-          value={`$${totalRevenue.toFixed(0)}`}
+          value={`$${totalRevenue?.toFixed(0)}`}
           icon={DollarSign}
           description="From recent orders"
           gradient="from-green-100 to-green-50 text-green-900"
@@ -133,7 +133,7 @@ export function SellerDashboardComponent({
         <CardHeader>
           <CardTitle>Recent Order Items</CardTitle>
           <CardDescription>
-            Showing your latest {dashboard.recentOrderItems.length} items sold
+            Showing your latest {dashboard?.recentOrderItems?.length} items sold
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -148,22 +148,24 @@ export function SellerDashboardComponent({
                 </tr>
               </thead>
               <tbody>
-                {dashboard.recentOrderItems.map((item) => (
+                {dashboard?.recentOrderItems?.map((item) => (
                   <tr
-                    key={item.id}
+                    key={item?.id}
                     className={`border-b last:border-none hover:bg-muted/50 transition-shadow ${
-                      item.quantity <= 5 ? "bg-amber-50 dark:bg-red-900/10" : ""
+                      item?.quantity <= 5
+                        ? "bg-amber-50 dark:bg-red-900/10"
+                        : ""
                     }`}
                   >
                     <td className="py-3 px-2 font-medium">
-                      {item.medicineNameSnapshot}
+                      {item?.medicineNameSnapshot}
                     </td>
-                    <td className="text-center py-3 px-2">{item.quantity}</td>
+                    <td className="text-center py-3 px-2">{item?.quantity}</td>
                     <td className="text-right py-3 px-2 font-semibold">
-                      ${item.subtotal}
+                      $ {item?.subtotal}
                     </td>
                     <td className="text-right py-3 px-2 text-muted-foreground">
-                      {formatDate(item.order.createdAt)}
+                      {formatDate(item?.order?.createdAt)}
                     </td>
                   </tr>
                 ))}

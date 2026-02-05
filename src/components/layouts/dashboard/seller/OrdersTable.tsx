@@ -133,9 +133,13 @@ export function OrdersTable({ orders, onRefresh }: OrdersTableProps) {
       } else {
         toast.error(res?.data?.message ?? "Failed to update status");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to update order status:", error);
-      toast.error(error?.message ?? "Failed to update order status");
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to update order status";
+      toast.error(errorMessage);
     } finally {
       setUpdatingOrders((prev) => {
         const next = new Set(prev);

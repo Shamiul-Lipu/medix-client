@@ -1,18 +1,26 @@
 "use server";
 
-import { UserRole } from "@/constants/userRoles";
-import { adminService } from "@/service/adminService";
+import { ServiceOptions } from "@/constants/medicine";
+// import { UserRole } from "@/constants/userRoles";
+import {
+  adminService,
+  AdminUserControlPayload,
+  UserFilters,
+} from "@/service/adminService";
 import { updateTag } from "next/cache";
 
-export const getAllUsers = async (filters?: Record<string, any>) => {
-  const res = await adminService.getAllUsers(filters);
+export const getAllUsers = async (
+  filters?: UserFilters,
+  options?: ServiceOptions,
+) => {
+  const res = await adminService.getAllUsers(filters, options);
   updateTag("adminUsers"); // invalidate cache for users
   return res;
 };
 
 export const controlUser = async (
   userId: string,
-  payload: { isBanned?: boolean; role?: UserRole; [key: string]: any },
+  payload: AdminUserControlPayload,
 ) => {
   const res = await adminService.controlUser(userId, payload);
   updateTag("adminUsers"); // invalidate users cache

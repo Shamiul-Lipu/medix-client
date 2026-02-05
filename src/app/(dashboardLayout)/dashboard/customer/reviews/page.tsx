@@ -177,59 +177,62 @@ export default function DashboardPage() {
           </div>
         ) : (
           orders.map((order) => (
-            <Card key={order.id} className="border-gray-200 bg-white shadow-sm">
+            <Card
+              key={order?.id}
+              className="border-gray-200 bg-white shadow-sm"
+            >
               <CardHeader className="flex justify-between items-start">
                 <div>
                   <CardTitle className="text-base font-semibold">
-                    Order ID: {order.id}
+                    Order ID: {order?.id}
                   </CardTitle>
                   <div className="text-sm text-muted-foreground mt-1">
                     Total:{" "}
-                    <span className="font-medium">₹{order.totalAmount}</span> •
-                    Payment: {order.paymentMethod}
-                    {order.deliveredAt && (
+                    <span className="font-medium">{order.totalAmount}</span> •
+                    Payment: {order?.paymentMethod}
+                    {order?.deliveredAt && (
                       <>
                         {" "}
                         • Delivered:{" "}
-                        {new Date(order.deliveredAt).toLocaleString()}
+                        {new Date(order?.deliveredAt).toLocaleString()}
                       </>
                     )}
                   </div>
                 </div>
 
-                <Badge className={getStatusColor(order.status)}>
-                  {order.status}
+                <Badge className={getStatusColor(order?.status)}>
+                  {order?.status}
                 </Badge>
               </CardHeader>
 
               <CardContent>
                 <div className="grid gap-3">
-                  {order.items.map((item) => (
+                  {order?.items?.map((item) => (
                     <div
-                      key={item.id}
+                      key={item?.id}
                       className="border border-gray-200 rounded-lg p-3 flex justify-between items-center bg-slate-50"
                     >
                       <div>
                         <div className="font-medium">
-                          {item.medicineNameSnapshot}
+                          {item?.medicineNameSnapshot}
                         </div>
                         <div className="text-sm text-muted-foreground mt-1">
-                          Qty: {item.quantity} • Price: ₹{item.priceSnapshot} •
-                          Subtotal: ₹{item.subtotal}
+                          Qty: {item?.quantity} • Price: {item?.priceSnapshot} •
+                          Subtotal: {item?.subtotal}
                         </div>
 
-                        {item.review && (
+                        {item?.review && (
                           <div className="mt-2 text-sm text-muted-foreground">
                             ⭐ Rating:{" "}
                             <span className="font-medium">
-                              {item.review.rating}
+                              {item?.review?.rating}
                             </span>
-                            {item.review.comment && (
+                            {item?.review?.comment && (
                               <>
                                 {" "}
                                 • Comment:{" "}
                                 <span className="font-medium">
-                                  {item.review.comment}
+                                  {item?.review?.comment}
                                 </span>
                               </>
                             )}
@@ -238,20 +241,20 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="flex gap-2">
-                        {order.status === "DELIVERED" && (
+                        {order?.status === "DELIVERED" && (
                           <Button
                             size="sm"
                             onClick={() => openReviewModal(item)}
                           >
-                            {item.review ? "Edit Review" : "Add Review"}
+                            {item?.review ? "Edit Review" : "Add Review"}
                           </Button>
                         )}
 
-                        {item.review && (
+                        {item?.review && (
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => handleDeleteReview(item.review!.id)}
+                            onClick={() => handleDeleteReview(item?.review!.id)}
                           >
                             Delete Review
                           </Button>

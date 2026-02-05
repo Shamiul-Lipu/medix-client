@@ -46,7 +46,7 @@ export function LoginForm({
         const { error } = await authClient.signIn.email({
           email: value.email,
           password: value.password,
-          callbackURL: "http://localhost:3000/dashboard",
+          callbackURL: `https://medix-client.vercel.app/dashboard`,
         });
 
         if (error) {
@@ -56,7 +56,11 @@ export function LoginForm({
 
         toast.success("Logged in successfully!", { id: toastId });
       } catch (err) {
-        toast.error("Something went wrong. Please try again.", { id: toastId });
+        const message =
+          err instanceof Error ? err.message : "An unexpected error occurred";
+        toast.error(`Something went wrong, please try again. ${message}`, {
+          id: toastId,
+        });
       }
     },
   });

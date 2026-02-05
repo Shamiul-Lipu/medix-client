@@ -111,7 +111,7 @@ export function OrdersSection() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchOrders();

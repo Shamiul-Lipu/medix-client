@@ -17,7 +17,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getOrders } from "@/actions/order.actions";
 import { toast } from "sonner";
 
-// Types matching backend response (NO item status anymore)
 interface OrderItem {
   id: string;
   medicineNameSnapshot: string;
@@ -101,13 +100,11 @@ export default function OrdersDashboard() {
       order.customer?.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  // Transform orders for stats component (needs totalAmount as number)
   const ordersForStats = filteredOrders.map((order) => ({
     status: order.status,
     totalAmount: parseFloat(order.totalAmount),
   }));
 
-  // Transform orders for table (needs proper types)
   const ordersForTable = filteredOrders.map((order) => ({
     id: order.id,
     customerId: order.customer.id,

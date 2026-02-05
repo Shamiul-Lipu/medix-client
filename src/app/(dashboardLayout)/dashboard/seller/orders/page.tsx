@@ -77,8 +77,8 @@ export default function OrdersDashboard() {
       setIsLoading(true);
       const response = (await getOrders()) as OrdersResponse;
 
-      if (response.data?.success && response.data.data?.orders) {
-        setOrders(response.data.data.orders);
+      if (response.data?.success && response.data?.data?.orders) {
+        setOrders(response.data.data?.orders);
         console.log(setOrders);
       } else {
         throw new Error("Invalid response format");
@@ -96,41 +96,41 @@ export default function OrdersDashboard() {
   // Filter orders by search term
   const filteredOrders = orders.filter(
     (order) =>
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.shippingName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.shippingPhone.includes(searchTerm) ||
-      order.customer?.email.toLowerCase().includes(searchTerm.toLowerCase()),
+      order?.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order?.shippingName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order?.shippingPhone.includes(searchTerm) ||
+      order?.customer?.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Transform orders for stats component (needs totalAmount as number)
   const ordersForStats = filteredOrders.map((order) => ({
-    status: order.status,
-    totalAmount: parseFloat(order.totalAmount),
+    status: order?.status,
+    totalAmount: parseFloat(order?.totalAmount),
   }));
 
   // Transform orders for table (needs proper types)
   const ordersForTable = filteredOrders.map((order) => ({
-    id: order.id,
-    customerId: order.customer.id,
-    customerName: order.customer.name,
-    customerEmail: order.customer.email,
-    totalAmount: parseFloat(order.totalAmount),
-    paymentMethod: order.paymentMethod,
-    status: order.status,
-    shippingName: order.shippingName,
-    shippingPhone: order.shippingPhone,
-    shippingAddress: order.shippingAddress,
+    id: order?.id,
+    customerId: order?.customer?.id,
+    customerName: order?.customer?.name,
+    customerEmail: order?.customer?.email,
+    totalAmount: parseFloat(order?.totalAmount),
+    paymentMethod: order?.paymentMethod,
+    status: order?.status,
+    shippingName: order?.shippingName,
+    shippingPhone: order?.shippingPhone,
+    shippingAddress: order?.shippingAddress,
     notes: "", // Backend doesn't return notes in list view
-    createdAt: new Date(order.createdAt),
-    updatedAt: new Date(order.createdAt), // Use createdAt as fallback
-    deliveredAt: order.deliveredAt ? new Date(order.deliveredAt) : null,
+    createdAt: new Date(order?.createdAt),
+    updatedAt: new Date(order?.createdAt), // Use createdAt as fallback
+    deliveredAt: order?.deliveredAt ? new Date(order?.deliveredAt) : null,
     items: order.items.map((item) => ({
-      id: item.id,
+      id: item?.id,
       medicineNameSnapshot: item.medicineNameSnapshot,
-      quantity: item.quantity,
-      priceSnapshot: parseFloat(item.priceSnapshot),
-      subtotal: parseFloat(item.subtotal),
-      status: item.status,
+      quantity: item?.quantity,
+      priceSnapshot: parseFloat(item?.priceSnapshot),
+      subtotal: parseFloat(item?.subtotal),
+      status: item?.status,
     })),
   }));
 
@@ -178,7 +178,7 @@ export default function OrdersDashboard() {
                     <Skeleton className="h-4 w-32" />
                   ) : (
                     <>
-                      {filteredOrders.length} of {orders.length} orders
+                      {filteredOrders?.length} of {orders?.length} orders
                     </>
                   )}
                 </CardDescription>

@@ -5,6 +5,8 @@ import { Medicine } from "@/constants/medicine";
 import { medicineService } from "@/service/medicine.service";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
+import { ProductSkeleton } from "./ProductCardSkeleton";
 
 const Products = async () => {
   const [featuredRes, bestSellerRes, newArrivalRes] = await Promise.all([
@@ -26,9 +28,9 @@ const Products = async () => {
   ]);
   // console.log(featuredRes, bestSellerRes, newArrivalRes);
   const tabData: Record<string, Medicine[]> = {
-    featured: featuredRes.data?.data || [],
-    bestsellers: bestSellerRes.data?.data || [],
-    newArrivals: newArrivalRes.data?.data || [],
+    featured: featuredRes?.data?.data || [],
+    bestsellers: bestSellerRes?.data?.data || [],
+    newArrivals: newArrivalRes?.data?.data || [],
   };
 
   return (
@@ -67,21 +69,23 @@ const Products = async () => {
             </TabsTrigger>
           </TabsList>
 
-          {["featured", "bestsellers", "newArrivals"].map((tab) => (
-            <TabsContent key={tab} value={tab}>
-              {tabData[tab]?.length > 0 ? (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                  {tabData[tab].map((medicine) => (
-                    <MedicineCard key={medicine.id} medicine={medicine} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center col-span-4 text-muted-foreground">
-                  No products found
-                </p>
-              )}
-            </TabsContent>
-          ))}
+          <Suspense fallback={<ProductSkeleton />}>
+            {["featured", "bestsellers", "newArrivals"].map((tab) => (
+              <TabsContent key={tab} value={tab}>
+                {tabData[tab]?.length > 0 ? (
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {tabData[tab].map((medicine) => (
+                      <MedicineCard key={medicine.id} medicine={medicine} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center col-span-4 text-muted-foreground">
+                    No products found
+                  </p>
+                )}
+              </TabsContent>
+            ))}
+          </Suspense>
         </Tabs>
       </div>
     </section>

@@ -94,8 +94,10 @@ export default function MedicineDialog({
         const res = await getCategories(1, 1000);
         if (res.error) throw new Error(res.error.message);
         setCategories(res.data);
-      } catch (err: any) {
-        toast.error(err.message || "Failed to load categories");
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to load categories";
+        toast.error(message);
       } finally {
         setLoadingCategories(false);
       }
@@ -110,7 +112,7 @@ export default function MedicineDialog({
     if (medicine) {
       form.reset({
         name: medicine.name,
-        manufacturer: medicine.manufacturer,
+        manufacturer: medicine?.manufacturer,
         categoryId: medicine.category.id,
         price: Number(medicine.price),
         stock: medicine.stock,

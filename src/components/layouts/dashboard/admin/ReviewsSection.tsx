@@ -98,7 +98,7 @@ export function ReviewsSection() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchReviews();

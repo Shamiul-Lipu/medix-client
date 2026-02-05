@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Package, Star, CalendarCheck } from "lucide-react";
+import Image from "next/image";
 
 export interface User {
   id: string;
@@ -75,9 +76,11 @@ export function CustomerDashboardComponent({
         </div>
         <div className="mt-4 sm:mt-0 flex items-center gap-4">
           {user.image ? (
-            <img
+            <Image
               src={user.image}
-              alt={user.name}
+              alt={user.name || "User Avatar"}
+              width={48}
+              height={48}
               className="h-12 w-12 rounded-full border-2 border-indigo-500"
             />
           ) : (

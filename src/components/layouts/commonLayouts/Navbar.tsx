@@ -25,7 +25,6 @@ export async function Navbar() {
   const { data: session } = await getSession();
   const user = session?.user ?? null;
   const isLoggedIn = !!user;
-  const userRole = user?.role;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">

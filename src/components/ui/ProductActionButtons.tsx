@@ -18,9 +18,9 @@ export default function ProductActionButtons({
   const { addToCart } = useCart();
 
   const handleAddToCart = async () => {
-    if (medicine.stock === 0) return;
+    if (medicine?.stock === 0) return;
 
-    const toastId = toast.loading(`Adding ${medicine.name}...`);
+    const toastId = toast.loading(`Adding ${medicine?.name}...`);
 
     try {
       const res = await getSession();
@@ -41,7 +41,7 @@ export default function ProductActionButtons({
       await addToCart({
         medicineId: medicine.id,
         name: medicine.name,
-        manufacturer: medicine.manufacturer,
+        manufacturer: medicine?.manufacturer,
         price: Number(medicine.price),
         imageUrl: medicine.imageUrl || "/placeholder.png",
         quantity: 1,
@@ -56,8 +56,8 @@ export default function ProductActionButtons({
   };
 
   const handleBuyNow = async () => {
-    if (medicine.stock === 0) return;
-    const toastId = toast.loading(`Adding ${medicine.name}...`);
+    if (medicine?.stock === 0) return;
+    const toastId = toast.loading(`Adding ${medicine?.name}...`);
 
     try {
       const res = await getSession();
@@ -77,7 +77,7 @@ export default function ProductActionButtons({
       await addToCart({
         medicineId: medicine.id,
         name: medicine.name,
-        manufacturer: medicine.manufacturer,
+        manufacturer: medicine?.manufacturer,
         price: Number(medicine.price),
         imageUrl: medicine.imageUrl || "/placeholder.png",
         quantity: 1,
@@ -105,7 +105,7 @@ export default function ProductActionButtons({
       <Button
         size="lg"
         variant="outline"
-        disabled={medicine.stock === 0}
+        disabled={medicine?.stock === 0}
         onClick={handleBuyNow}
         className="flex-1"
       >

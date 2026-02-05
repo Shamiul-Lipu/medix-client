@@ -26,7 +26,7 @@ interface ServiceOptions {
   tags?: string[];
 }
 
-const API_BASE = "http://localhost:5000/api/v1/order";
+const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/order`;
 
 export const orderService = {
   // Get all orders for the user

@@ -5,6 +5,18 @@ import { userService } from "./service/user.service";
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  if (pathname.startsWith("/verify-email")) {
+    return NextResponse.next();
+  }
+
+  // Check for session token in cookies
+  // const sessionToken = request.cookies.get("better-auth.session_token");
+
+  // //* User is not authenticated at all
+  // if (!sessionToken) {
+  //   return NextResponse.redirect(new URL("/login", request.url));
+  // }
+
   const { data } = await userService.getSession();
 
   // Not authenticated redirect to login

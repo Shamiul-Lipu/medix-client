@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import CategoryDialog from "./CategoryDialog";
 import {
@@ -51,30 +51,28 @@ export default function CategoriesTab() {
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  // Fetch categories
-  const fetchCategories = async (
-    newPage = page,
-    search = debouncedSearchTerm,
-  ) => {
-    setLoading(true);
-    try {
-      const res = await getCategories(newPage, limit, search);
-      if (res.error) {
-        toast.error(res.error.message);
-      } else {
-        setCategories(res.data);
-        setPagination(res.pagination || null);
-        setPage(newPage);
+  const fetchCategories = useCallback(
+    async (targetPage: number, searchQuery: string) => {
+      setLoading(true);
+      try {
+        const res = await getCategories(targetPage, limit, searchQuery);
+        if (res.error) {
+          toast.error(res.error.message);
+        } else {
+          setCategories(res.data);
+          setPagination(res.pagination || null);
+          setPage(targetPage);
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [limit],
+  );
 
-  // Fetch on mount & when search changes
   useEffect(() => {
     fetchCategories(1, debouncedSearchTerm);
-  }, [debouncedSearchTerm]);
+  }, [debouncedSearchTerm, fetchCategories]);
 
   const filteredCategories = useMemo(() => {
     return categories

@@ -2,21 +2,19 @@ import Image from "next/image";
 import { Star, ShieldCheck } from "lucide-react";
 
 import { medicineService } from "@/service/medicine.service";
-import { Medicine } from "@/constants/medicine";
+// import { Medicine } from "@/constants/medicine";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProductActionButtons from "@/components/ui/ProductActionButtons";
 
-export async function generateStaticParams() {
-  const { data } = await medicineService.getMedicines();
-  if (!data?.data) {
-    return [];
-  }
-  return data?.data?.map((medicine: Medicine) => ({
-    id: medicine.id,
-  }));
-}
+// export async function generateStaticParams() {
+//   const { data } = await medicineService.getMedicines();
+
+//   return data?.data?.map((medicine: Medicine) => ({
+//     id: medicine?.id,
+//   }));
+// }
 
 const SingleProductPage = async ({
   params,
@@ -31,9 +29,9 @@ const SingleProductPage = async ({
 
   const reviews = medicine?.reviews ?? [];
   const averageRating =
-    reviews.length > 0
-      ? reviews.reduce((a: number, b: { rating: number }) => a + b.rating, 0) /
-        reviews.length
+    reviews?.length > 0
+      ? reviews.reduce((a: number, b: { rating: number }) => a + b?.rating, 0) /
+        reviews?.length
       : 0;
 
   return (
@@ -57,7 +55,7 @@ const SingleProductPage = async ({
             <Badge variant="secondary">{medicine?.category?.name}</Badge>
             <h1 className="mt-2 text-3xl font-semibold">{medicine?.name}</h1>
             <p className="text-sm text-muted-foreground">
-              Manufactured by {medicine.manufacturer}
+              Manufactured by {medicine?.manufacturer}
             </p>
           </div>
 
@@ -76,38 +74,39 @@ const SingleProductPage = async ({
               ))}
             </div>
             <span className="text-sm text-muted-foreground">
-              {reviews.length ? `${reviews.length} reviews` : "No reviews yet"}
+              {reviews?.length
+                ? `${reviews?.length} reviews`
+                : "No reviews yet"}
             </span>
           </div>
 
           {/* Price */}
-          <p className="text-2xl font-bold">৳ {medicine.price}</p>
+          <p className="text-2xl font-bold">৳ {medicine?.price}</p>
 
           {/* Key facts */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">Strength</p>
-              <p className="font-medium">{medicine.strength}</p>
+              <p className="font-medium">{medicine?.strength}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Form</p>
-              <p className="font-medium capitalize">{medicine.dosageForm}</p>
+              <p className="font-medium capitalize">{medicine?.dosageForm}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Stock</p>
               <p
                 className={`font-medium ${
-                  medicine.stock > 0 ? "text-green-600" : "text-destructive"
+                  medicine?.stock > 0 ? "text-green-600" : "text-destructive"
                 }`}
               >
-                {medicine.stock > 0
-                  ? `${medicine.stock} available`
+                {medicine?.stock > 0
+                  ? `${medicine?.stock} available`
                   : "Out of stock"}
               </p>
             </div>
           </div>
 
-          {/* CTA */}
           {/* CTA */}
           <ProductActionButtons medicine={medicine} />
 
@@ -127,19 +126,19 @@ const SingleProductPage = async ({
 
             <TabsContent value="description" className="mt-6">
               <p className="text-muted-foreground leading-relaxed">
-                {medicine.description}
+                {medicine?.description}
               </p>
             </TabsContent>
 
             <TabsContent value="usage" className="mt-6">
               <p className="text-muted-foreground leading-relaxed">
-                {medicine.usageInstructions}
+                {medicine?.usageInstructions}
               </p>
             </TabsContent>
 
             <TabsContent value="side-effects" className="mt-6">
               <p className="text-muted-foreground leading-relaxed">
-                {medicine.sideEffects}
+                {medicine?.sideEffects}
               </p>
             </TabsContent>
           </Tabs>
@@ -160,7 +159,7 @@ const SingleProductPage = async ({
           <div className="space-y-4">
             {reviews?.map(
               (review: { id: string; rating: number; comment?: string }) => (
-                <div key={review.id} className="rounded-lg border p-4">
+                <div key={review?.id} className="rounded-lg border p-4">
                   <div className="flex items-center gap-2">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star

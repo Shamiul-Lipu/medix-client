@@ -77,7 +77,7 @@ export interface GetMedicinesParams {
   sortOrderStock?: "asc" | "desc";
 }
 
-const API_BASE = "http://localhost:5000/api/v1/medicine";
+const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/medicine`;
 
 export const medicineService = {
   getMedicines: async (params?: Partial<GetMedicinesParams>) => {

@@ -5,6 +5,7 @@ import {
   ShoppingBag,
   // BarChart3,
   MessageSquare,
+  ClipboardCheck,
 } from "lucide-react";
 
 // Role-based navigation
@@ -21,9 +22,9 @@ export const NAV_ITEMS = {
       icon: Users,
     },
     {
-      label: "Reviews",
+      label: "Moderation",
       href: "/dashboard/admin/reviews",
-      icon: MessageSquare,
+      icon: ClipboardCheck,
     },
     {
       label: "Inventory",

@@ -5,12 +5,15 @@ export const userService = {
     try {
       const cookieStore = await cookies();
 
-      const res = await fetch(`http://localhost:5000/api/auth/get-session`, {
-        headers: {
-          Cookie: cookieStore.toString(),
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/get-session`,
+        {
+          headers: {
+            Cookie: cookieStore.toString(),
+          },
+          cache: "no-store",
         },
-        cache: "no-store",
-      });
+      );
 
       if (!res.ok) {
         return {
@@ -42,16 +45,19 @@ export const userService = {
     try {
       const cookieStore = await cookies();
 
-      const res = await fetch(`http://localhost:5000/api/v1/auth/me`, {
-        method: "GET",
-        cache: "no-store",
-        headers: {
-          Cookie: cookieStore.toString(),
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/auth/me`,
+        {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            Cookie: cookieStore.toString(),
+          },
+          next: {
+            tags: ["user"],
+          },
         },
-        next: {
-          tags: ["user"],
-        },
-      });
+      );
 
       if (!res.ok) {
         return {

@@ -58,6 +58,7 @@ import { controlUser, getAllUsers } from "@/actions/admin.action";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { toast } from "sonner";
+import { UserFilters } from "@/service/adminService";
 
 interface User {
   id: string;
@@ -71,14 +72,6 @@ interface User {
   ordersCount?: number;
   reviewsCount?: number;
   medicinesCount?: number;
-}
-
-interface UserFilters {
-  page?: string;
-  limit?: string;
-  role?: UserRole;
-  isBanned?: string;
-  search?: string;
 }
 
 export default function UserActivityPage() {
@@ -172,34 +165,34 @@ export default function UserActivityPage() {
   };
 
   // Helper functions
-  const getRoleBadge = (role: string) => {
-    const variants = {
-      ADMIN: {
-        icon: Shield,
-        className:
-          "bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200",
-      },
-      SELLER: {
-        icon: ShoppingBag,
-        className:
-          "bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200",
-      },
-      CUSTOMER: {
-        icon: Users,
-        className:
-          "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200",
-      },
-    };
-    const config = variants[role as keyof typeof variants];
-    const Icon = config.icon;
+  // const getRoleBadge = (role: string) => {
+  //   const variants = {
+  //     ADMIN: {
+  //       icon: Shield,
+  //       className:
+  //         "bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200",
+  //     },
+  //     SELLER: {
+  //       icon: ShoppingBag,
+  //       className:
+  //         "bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200",
+  //     },
+  //     CUSTOMER: {
+  //       icon: Users,
+  //       className:
+  //         "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200",
+  //     },
+  //   };
+  //   const config = variants[role as keyof typeof variants];
+  //   const Icon = config.icon;
 
-    return (
-      <Badge variant="outline" className={config.className}>
-        <Icon className="size-3 mr-1" />
-        {role}
-      </Badge>
-    );
-  };
+  //   return (
+  //     <Badge variant="outline" className={config.className}>
+  //       <Icon className="size-3 mr-1" />
+  //       {role}
+  //     </Badge>
+  //   );
+  // };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -325,7 +318,7 @@ export default function UserActivityPage() {
                 onValueChange={setRoleFilter}
                 disabled={loading}
               >
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-40">
                   <Filter className="size-4 mr-2" />
                   <SelectValue placeholder="Filter by role" />
                 </SelectTrigger>
@@ -342,7 +335,7 @@ export default function UserActivityPage() {
                 onValueChange={(v) => setBanFilter(v as typeof banFilter)}
                 disabled={loading}
               >
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-35">
                   <SelectValue placeholder="Ban Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -361,7 +354,7 @@ export default function UserActivityPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="w-[300px]">User</TableHead>
+                  <TableHead className="w-75">User</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Stats</TableHead>
@@ -414,7 +407,7 @@ export default function UserActivityPage() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="size-10 border-2 border-background shadow-sm">
-                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold">
+                              <AvatarFallback className="bg-linear-to-br from-blue-500 to-purple-500 text-white font-semibold">
                                 {getInitials(user.name)}
                               </AvatarFallback>
                             </Avatar>
@@ -435,7 +428,7 @@ export default function UserActivityPage() {
                             }
                             disabled={isLoading}
                           >
-                            <SelectTrigger className="w-[140px]">
+                            <SelectTrigger className="w-35">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

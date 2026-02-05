@@ -65,9 +65,13 @@ export function RegisterForm({
           return;
         }
         toast.success("User created successfully!", { id: toastId });
-        router.push("/dashboard");
+        router.push("https://medix-client.vercel.app/dashboard");
       } catch (err) {
-        toast.error("Something went wrong, please try again.", { id: toastId });
+        const message =
+          err instanceof Error ? err.message : "An unexpected error occurred";
+        toast.error(`Something went wrong, please try again. ${message}`, {
+          id: toastId,
+        });
       }
     },
   });

@@ -75,8 +75,10 @@ export default function OrderSheet({ cartItems }: OrderSheetProps) {
         setOpen(false);
         clearCart();
         form.reset();
-      } catch (err: any) {
-        toast.error(err?.message || "Failed to place order", {
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to place order";
+        toast.error(message, {
           id: toastId,
         });
       }

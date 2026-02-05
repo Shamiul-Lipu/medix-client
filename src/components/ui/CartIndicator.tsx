@@ -9,7 +9,7 @@ export default function CartIndicator() {
     return (
       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pharmacy-teal-light opacity-75"></span>
     );
-  console.log(itemCount);
+  // console.log(itemCount);
   return (
     <>
       {" "}

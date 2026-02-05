@@ -44,8 +44,8 @@ export function OrderStats({ orders, className }: OrderStatsProps) {
         "bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300",
     },
     {
-      label: "Revenue",
-      value: `₹${totalRevenue.toFixed(2)}`,
+      label: "Amount",
+      value: `${totalRevenue.toFixed(2)}`,
       icon: AlertCircle,
       color:
         "bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300",

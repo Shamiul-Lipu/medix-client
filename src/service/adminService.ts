@@ -1,7 +1,7 @@
 import { UserRole } from "@/constants/userRoles";
 import { cookies } from "next/headers";
 
-const API_BASE = "http://localhost:5000/api/v1/admin";
+const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin`;
 
 interface ServiceOptions {
   cache?: RequestCache;
@@ -9,21 +9,27 @@ interface ServiceOptions {
   tags?: string[];
 }
 
-interface AdminUserControlPayload {
+export interface AdminUserControlPayload {
   isBanned?: boolean;
   role?: UserRole;
-  [key: string]: any;
+  [key: string]: string | number | boolean | UserRole | undefined;
+}
+
+export interface UserFilters {
+  page?: string;
+  limit?: string;
+  role?: UserRole;
+  isBanned?: string;
+  search?: string;
 }
 
 export const adminService = {
-  getAllUsers: async (
-    filters?: Record<string, any>,
-    options?: ServiceOptions,
-  ) => {
+  getAllUsers: async (filters?: UserFilters, options?: ServiceOptions) => {
     try {
       const cookieStore = await cookies();
       const query = filters
-        ? "?" + new URLSearchParams(filters).toString()
+        ? "?" +
+          new URLSearchParams(filters as Record<string, string>).toString()
         : "";
 
       const res = await fetch(`${API_BASE}/users${query}`, {

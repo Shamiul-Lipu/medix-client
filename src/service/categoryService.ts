@@ -26,7 +26,7 @@ interface UpdateCategoryPayload {
   isActive?: boolean;
 }
 
-const API_BASE = "http://localhost:5000/api/v1/category";
+const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/category`;
 
 export const categoryService = {
   getCategories: async (page = 1, limit = 5, searchTerm = "") => {

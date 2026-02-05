@@ -64,7 +64,7 @@ export default function CatalogHeader({
 
           {/* Sort */}
           <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
-            <SelectTrigger className="w-[180px] h-11">
+            <SelectTrigger className="w-45 h-11">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>

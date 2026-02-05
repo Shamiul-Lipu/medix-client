@@ -38,6 +38,54 @@ export default function CatalogPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
+  // useEffect(() => {
+  //   const fetchMedicines = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const res = await getMedicines({
+  //         search: debouncedSearch || undefined,
+  //         page,
+  //         limit,
+  //         sortBy: sort === "newest" ? "createdAt" : "price",
+  //         sortOrder:
+  //           sort === "newest" ? "desc" : sort === "price-high" ? "desc" : "asc",
+  //       });
+
+  //       if (res?.data) {
+  //         const allMedicines = res?.data?.data as unknown as Medicine[];
+
+  //         const catMap: Record<string, string> = {};
+  //         allMedicines.forEach((m) => {
+  //           if (m?.category?.id && m?.category?.name) {
+  //             catMap[m?.category?.id] = m?.category?.name;
+  //           }
+  //         });
+
+  //         let filtered = allMedicines;
+
+  //         if (selectedCategories?.length > 0) {
+  //           filtered = filtered?.filter((m) =>
+  //             selectedCategories.includes(m?.category?.id ?? ""),
+  //           );
+  //         }
+
+  //         if (inStockOnly) {
+  //           filtered = filtered?.filter((m) => m?.stock > 0);
+  //         }
+
+  //         setMedicines(filtered);
+  //         setTotalPages(res?.data?.pagination?.totalPages);
+  //       }
+  //     } catch (err) {
+  //       console.error("Failed to fetch medicines", err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchMedicines();
+  // }, [debouncedSearch, selectedCategories, inStockOnly, sort, page]);
+
   useEffect(() => {
     const fetchMedicines = async () => {
       setLoading(true);
@@ -51,30 +99,35 @@ export default function CatalogPage() {
             sort === "newest" ? "desc" : sort === "price-high" ? "desc" : "asc",
         });
 
-        if (res.data) {
-          const allMedicines = res.data.data as unknown as Medicine[];
+        if (res?.data) {
+          const allMedicines = res?.data?.data as unknown as Medicine[];
 
           const catMap: Record<string, string> = {};
           allMedicines.forEach((m) => {
-            if (m.category?.id && m.category?.name) {
-              catMap[m.category.id] = m.category.name;
+            if (m?.category?.id && m?.category?.name) {
+              catMap[m?.category?.id] = m?.category?.name;
             }
           });
 
-          let filtered = allMedicines;
+          // Filter out null/undefined medicines first
+          let filtered =
+            allMedicines?.filter((m) => m !== null && m !== undefined) ?? [];
 
-          if (selectedCategories.length > 0) {
-            filtered = filtered.filter((m) =>
-              selectedCategories.includes(m.category?.id ?? ""),
+          if (selectedCategories?.length > 0) {
+            filtered = filtered.filter(
+              (m) =>
+                m?.category?.id && selectedCategories.includes(m.category.id),
             );
           }
 
           if (inStockOnly) {
-            filtered = filtered.filter((m) => m.stock > 0);
+            filtered = filtered?.filter(
+              (m) => m && typeof m.stock === "number" && m.stock > 0,
+            );
           }
 
           setMedicines(filtered);
-          setTotalPages(res.data.pagination.totalPages);
+          setTotalPages(res?.data?.pagination?.totalPages);
         }
       } catch (err) {
         console.error("Failed to fetch medicines", err);
@@ -94,8 +147,8 @@ export default function CatalogPage() {
     const fetchAllCategories = async () => {
       try {
         const res = await getCategories(1, 1000);
-        if (res.error) throw new Error(res.error.message);
-        setAllCategories(res.data);
+        if (res?.error) throw new Error(res?.error?.message);
+        setAllCategories(res?.data);
       } catch (err) {
         console.error("Failed to fetch categories", err);
       }
@@ -115,7 +168,7 @@ export default function CatalogPage() {
           setSort={setSort}
           viewMode={viewMode}
           setViewMode={setViewMode}
-          totalResults={medicines.length}
+          totalResults={medicines?.length}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8 mt-8">
@@ -136,7 +189,7 @@ export default function CatalogPage() {
           <div className="lg:col-span-3">
             {loading ? (
               <ProductGridSkeleton viewMode={viewMode} />
-            ) : medicines.length === 0 ? (
+            ) : medicines?.length === 0 ? (
               <EmptyState
                 search={debouncedSearch}
                 onClearFilters={() => {

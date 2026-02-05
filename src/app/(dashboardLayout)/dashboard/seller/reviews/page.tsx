@@ -16,12 +16,12 @@ export default function SellerReviewPage() {
     setLoading(true);
     const res = await getOrders();
     if (res.error) {
-      toast.error(res.error.message);
+      toast.error(res.error?.message);
       setLoading(false);
       return;
     }
 
-    setOrders(res.data.data.orders);
+    setOrders(res?.data?.data?.orders);
     setLoading(false);
   };
 

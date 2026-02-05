@@ -35,7 +35,7 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
         return;
       }
 
-      if (user.role !== UserRoles.CUSTOMER) {
+      if (user?.role !== UserRoles.CUSTOMER) {
         toast.dismiss(toastId);
         toast.warning("Only customers can add items to the cart");
         setLoading(false);
@@ -43,17 +43,17 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
       }
       // Add item to cart
       addToCart({
-        medicineId: medicine.id,
-        name: medicine.name,
-        manufacturer: medicine.manufacturer,
-        price: Number(medicine.price),
+        medicineId: medicine?.id,
+        name: medicine?.name,
+        manufacturer: medicine?.manufacturer,
+        price: Number(medicine?.price),
         quantity: 1,
-        imageUrl: medicine.imageUrl || "/placeholder.png",
-        maxQuantity: Number(medicine.stock),
+        imageUrl: medicine?.imageUrl || "/placeholder.png",
+        maxQuantity: Number(medicine?.stock),
       });
 
       toast.dismiss(toastId);
-      toast.success(`${medicine.name} was added to your cart.`);
+      toast.success(`${medicine?.name} was added to your cart.`);
     } catch (err) {
       console.error(err);
       toast.dismiss(toastId);
@@ -69,13 +69,13 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
       <div className="relative aspect-square overflow-hidden rounded-t-2xl bg-muted/10">
         <Image
           src={medicine.imageUrl!}
-          alt={medicine.name}
+          alt={medicine?.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          width={1000}
-          height={1000}
-          layout="responsive"
+          width={500}
+          height={500}
+          style={{ width: "100%", height: "auto" }}
         />
-        {medicine.stock === 0 && (
+        {medicine?.stock === 0 && (
           <span className="absolute left-2 top-2 bg-destructive/90 text-white px-2 py-1 text-[10px] font-semibold rounded">
             Out of Stock
           </span>
@@ -92,27 +92,27 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
       {/* Card Content */}
       <CardContent className="p-4 flex flex-col gap-2">
         <div className="flex justify-between items-center text-xs text-muted-foreground">
-          <span>{medicine.category.name}</span>
+          <span>{medicine?.category?.name}</span>
           <span className="text-primary font-medium">
-            {medicine.manufacturer}
+            {medicine?.manufacturer}
           </span>
         </div>
 
         <h3 className="font-semibold line-clamp-2 text-foreground">
-          {medicine.name}
+          {medicine?.name}
         </h3>
 
-        {medicine.description && (
+        {medicine?.description && (
           <p className="text-sm text-muted-foreground line-clamp-2">
-            {medicine.description}
+            {medicine?.description}
           </p>
         )}
 
         <div className="flex items-baseline gap-2 mt-2">
           <span className="text-lg font-bold text-foreground">
-            ৳ {medicine.price}
+            ৳ {medicine?.price}
           </span>
-          {medicine.stock === 0 && (
+          {medicine?.stock === 0 && (
             <span className="text-sm text-destructive font-medium">
               Out of Stock
             </span>
@@ -124,14 +124,14 @@ const MedicineCard: React.FC<MedicineCardProps> = ({ medicine }) => {
           <Button
             className="flex-1 gap-2"
             size="sm"
-            disabled={medicine.stock === 0 || loading}
+            disabled={medicine?.stock === 0 || loading}
             onClick={handleAddToCart}
           >
             <ShoppingCart className="h-4 w-4" />
             {loading ? "Adding..." : "Add to Cart"}
           </Button>
 
-          <Link href={`/shop/${medicine.id}`} className="flex-1">
+          <Link href={`/shop/${medicine?.id}`} className="flex-1">
             <Button className="w-full gap-2" size="sm" variant="outline">
               Details
             </Button>

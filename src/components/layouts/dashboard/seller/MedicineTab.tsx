@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -48,7 +48,63 @@ export default function MedicinesTab() {
 
   const itemsPerPage = 5;
 
-  const fetchMedicines = async () => {
+  // const fetchMedicines = async () => {
+  //   try {
+  //     setLoading(true);
+
+  //     let sortBy: "createdAt" | "price" | "stock";
+  //     let sortOrder: "asc" | "desc";
+
+  //     switch (sort) {
+  //       case "stock-high":
+  //         sortBy = "stock";
+  //         sortOrder = "desc";
+  //         break;
+
+  //       case "stock-low":
+  //         sortBy = "stock";
+  //         sortOrder = "asc";
+  //         break;
+
+  //       case "price-high":
+  //         sortBy = "price";
+  //         sortOrder = "desc";
+  //         break;
+
+  //       default:
+  //         sortBy = "createdAt";
+  //         sortOrder = "desc";
+  //     }
+
+  //     const res = await getMedicines({
+  //       page: currentPage,
+  //       limit: itemsPerPage,
+  //       search: searchTerm || undefined,
+  //       categoryId: categoryFilter === "all" ? undefined : categoryFilter,
+
+  //       // sorting (IMPORTANT: only these)
+  //       sortBy,
+  //       sortOrder,
+  //     });
+
+  //     if (res.error) throw new Error(res.error.message);
+
+  //     setMedicines(res.data.data);
+  //     setTotalPages(res.data.pagination.totalPages);
+  //   } catch (err) {
+  //     toast.error("Failed to fetch medicines");
+  //     console.error(err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   fetchMedicines();
+  // }, [searchTerm, categoryFilter, sort, currentPage]);
+
+  // Wrap fetchMedicines in useCallback
+  const fetchMedicines = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -60,17 +116,14 @@ export default function MedicinesTab() {
           sortBy = "stock";
           sortOrder = "desc";
           break;
-
         case "stock-low":
           sortBy = "stock";
           sortOrder = "asc";
           break;
-
         case "price-high":
           sortBy = "price";
           sortOrder = "desc";
           break;
-
         default:
           sortBy = "createdAt";
           sortOrder = "desc";
@@ -81,8 +134,6 @@ export default function MedicinesTab() {
         limit: itemsPerPage,
         search: searchTerm || undefined,
         categoryId: categoryFilter === "all" ? undefined : categoryFilter,
-
-        // sorting (IMPORTANT: only these)
         sortBy,
         sortOrder,
       });
@@ -97,11 +148,12 @@ export default function MedicinesTab() {
     } finally {
       setLoading(false);
     }
-  };
+    // Add all state variables used inside the function to the dependency array
+  }, [searchTerm, categoryFilter, sort, currentPage, itemsPerPage]);
 
   useEffect(() => {
     fetchMedicines();
-  }, [searchTerm, categoryFilter, sort, currentPage]);
+  }, [fetchMedicines]); // Now this is safe and satisfies the linter
 
   const getStockVariant = (stock: number) => {
     if (stock === 0) return "destructive";
@@ -121,22 +173,22 @@ export default function MedicinesTab() {
 
       const payload = {
         id: editingMedicine?.id,
-        categoryId: values.categoryId,
-        name: values.name,
-        manufacturer: values.manufacturer,
-        price: String(values.price),
-        stock: values.stock,
-        dosageForm: values.dosageForm || undefined,
-        strength: values.strength || undefined,
-        isActive: values.isActive,
+        categoryId: values?.categoryId,
+        name: values?.name,
+        manufacturer: values?.manufacturer,
+        price: String(values?.price),
+        stock: values?.stock,
+        dosageForm: values?.dosageForm || undefined,
+        strength: values?.strength || undefined,
+        isActive: values?.isActive,
       };
 
-      // CREATE or UPDATE depending on editingMedicine
       const res = editingMedicine
         ? await updateMedicine(editingMedicine.id, payload)
         : await createMedicine(payload);
 
       if (res.error) {
+        setDialogOpen(false);
         toast.error(res.error.message);
         return;
       }
@@ -145,7 +197,7 @@ export default function MedicinesTab() {
       setDialogOpen(false);
       setEditingMedicine(null);
       await fetchMedicines();
-    } catch (err: any) {
+    } catch (err) {
       const message = err instanceof Error ? err.message : "Action failed";
       toast.error(message);
     } finally {
@@ -164,8 +216,10 @@ export default function MedicinesTab() {
             if (res.error) throw new Error(res.error.message);
             toast.success("Medicine deleted");
             fetchMedicines();
-          } catch (err: any) {
-            toast.error(err.message || "Failed to delete");
+          } catch (err) {
+            const message =
+              err instanceof Error ? err.message : "Action failed";
+            toast.error(message);
           }
         },
       },
@@ -311,19 +365,19 @@ export default function MedicinesTab() {
               </tr>
             ) : (
               medicines.map((m) => (
-                <tr key={m.id} className="border-b hover:bg-muted/50">
-                  <td className="px-6 py-4 font-medium">{m.name}</td>
+                <tr key={m?.id} className="border-b hover:bg-muted/50">
+                  <td className="px-6 py-4 font-medium">{m?.name}</td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {m.manufacturer}
+                    {m?.manufacturer}
                   </td>
-                  <td className="px-6 py-4 font-medium">${m.price}</td>
+                  <td className="px-6 py-4 font-medium">$ {m?.price}</td>
                   <td className="px-6 py-4">
-                    <Badge variant={getStockVariant(m.stock)}>
-                      {m.stock} · {getStockLabel(m.stock)}
+                    <Badge variant={getStockVariant(m?.stock)}>
+                      {m?.stock} · {getStockLabel(m?.stock)}
                     </Badge>
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {m.strength}
+                    {m?.strength}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
@@ -341,7 +395,7 @@ export default function MedicinesTab() {
                         size="icon"
                         variant="ghost"
                         className="text-destructive"
-                        onClick={() => handleDeleteMedicine(m.id)}
+                        onClick={() => handleDeleteMedicine(m?.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

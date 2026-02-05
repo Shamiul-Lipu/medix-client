@@ -22,9 +22,9 @@ interface ProductCardProps {
 export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
   const { addToCart } = useCart();
   const router = useRouter();
-  const isOutOfStock = medicine.stock === 0;
-  const isLowStock = medicine.stock > 0 && medicine.stock <= 10;
-  const price = parseFloat(medicine.price);
+  const isOutOfStock = medicine?.stock === 0;
+  const isLowStock = medicine?.stock > 0 && medicine?.stock <= 10;
+  const price = parseFloat(medicine?.price);
   const [loading, setLoading] = useState(false);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -43,7 +43,7 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
         return;
       }
 
-      if (user.role !== UserRoles.CUSTOMER) {
+      if (user?.role !== UserRoles.CUSTOMER) {
         toast.dismiss(toastId);
         toast.warning("Only customers can add items to the cart");
         setLoading(false);
@@ -51,15 +51,15 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
       }
 
       await addToCart({
-        medicineId: medicine.id,
+        medicineId: medicine?.id,
         quantity: 1,
-        name: medicine.name,
-        manufacturer: medicine.manufacturer,
+        name: medicine?.name,
+        manufacturer: medicine?.manufacturer,
         price: price,
         imageUrl: medicine.imageUrl!,
-        maxQuantity: medicine.stock,
+        maxQuantity: medicine?.stock,
       });
-      toast.success(`${medicine.name} was added to your cart.`, {
+      toast.success(`${medicine?.name} was added to your cart.`, {
         id: toastId,
       });
     } catch (err) {
@@ -71,7 +71,7 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
   };
 
   const handleViewDetails = () => {
-    router.push(`/shop/${medicine.id}`);
+    router.push(`/shop/${medicine?.id}`);
   };
 
   return (
@@ -88,11 +88,11 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
       >
         <Image
           src={medicine.imageUrl!}
-          alt={medicine.name}
+          alt={medicine?.name}
           className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-          width={1000}
-          height={1000}
-          layout="responsive"
+          width={500}
+          height={500}
+          style={{ width: "100%", height: "auto" }}
         />
 
         {/* Badges */}
@@ -107,7 +107,7 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
               variant="secondary"
               className="shadow-lg bg-orange-500 text-white"
             >
-              Only {medicine.stock} left
+              Only {medicine?.stock} left
             </Badge>
           )}
         </div>
@@ -119,28 +119,28 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
       >
         <div className="space-y-2">
           <Badge variant="secondary" className="text-xs font-normal">
-            {medicine.category?.name || "General"}
+            {medicine?.category?.name || "General"}
           </Badge>
 
           <h3 className="font-bold text-base md:text-lg line-clamp-2 group-hover:text-primary transition-colors">
-            {medicine.name}
+            {medicine?.name}
           </h3>
 
           <p className="text-xs text-muted-foreground uppercase tracking-wide">
-            {medicine.manufacturer}
+            {medicine?.manufacturer}
           </p>
 
-          {viewMode === "list" && medicine.description && (
+          {viewMode === "list" && medicine?.description && (
             <p className="text-sm text-muted-foreground line-clamp-2 hidden sm:block">
-              {medicine.description}
+              {medicine?.description}
             </p>
           )}
 
-          {medicine.dosageForm && medicine.strength && (
+          {medicine?.dosageForm && medicine?.strength && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="capitalize">{medicine.dosageForm}</span>
+              <span className="capitalize">{medicine?.dosageForm}</span>
               <span>•</span>
-              <span>{medicine.strength}</span>
+              <span>{medicine?.strength}</span>
             </div>
           )}
         </div>
@@ -156,9 +156,9 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
           <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
             <Package className="h-3 w-3" />
             <span>
-              {medicine.stock > 50
+              {medicine?.stock > 50
                 ? "In Stock"
-                : `${medicine.stock} units available`}
+                : `${medicine?.stock} units available`}
             </span>
           </div>
         )}
@@ -168,11 +168,20 @@ export default function ProductCard({ medicine, viewMode }: ProductCardProps) {
           <Button
             className="flex-1 gap-2"
             size="sm"
-            disabled={isOutOfStock}
+            disabled={isOutOfStock || loading}
             onClick={handleAddToCart}
           >
-            <ShoppingCart className="h-4 w-4" />
-            {isOutOfStock ? "Unavailable" : "Add to Cart"}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Adding...
+              </span>
+            ) : (
+              <>
+                <ShoppingCart className="h-4 w-4" />
+                {isOutOfStock ? "Unavailable" : "Add to Cart"}
+              </>
+            )}
           </Button>
 
           <Button
